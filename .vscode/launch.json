@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug DepGraph",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "depgraph",
+      "args": [
+        "./depgraph/analyze_file.py",
+        "--log-level",
+        "DEBUG",
+        "--depth",
+        "3",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+} 

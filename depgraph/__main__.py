@@ -1,0 +1,36 @@
+import ast
+from typing import Dict, List
+from depgraph.cli import parse_args
+from depgraph.logger import setup_logger
+
+
+def main() -> None:
+    (
+        file_path,
+        depth,
+        log_level,
+        log_file,
+    ) = parse_args()
+
+    # Set up logging first
+    logger = setup_logger(level=log_level, log_file=log_file)
+
+    # Import other modules after logger is configured
+    from depgraph.analyze_file import analyze_file
+    from depgraph.formatter import print_analysis
+
+    logger.debug("Starting analysis with parameters:")
+    logger.debug(f"  file_path: {file_path}")
+    logger.debug(f"  depth: {depth}")
+    logger.debug(f"  log_level: {log_level}")
+    logger.debug(f"  log_file: {log_file}")
+
+    logger.info(f"Analyzing file '{file_path}'")
+    analysis: Dict[str, List[ast.AST]] = analyze_file(file_path=file_path, depth=depth)
+
+    logger.info("Analysis complete!")
+    print_analysis(analysis)
+
+
+if __name__ == "__main__":
+    main()
