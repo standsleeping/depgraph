@@ -8,6 +8,7 @@ def main() -> None:
         depth,
         log_level,
         log_file,
+        scope_filter,
     ) = parse_args()
 
     # Set up logging first
@@ -23,12 +24,14 @@ def main() -> None:
     logger.debug(f"  depth: {depth}")
     logger.debug(f"  log_level: {log_level}")
     logger.debug(f"  log_file: {log_file}")
+    if scope_filter:
+        logger.debug(f"  scope_filter: {scope_filter}")
 
     logger.info(f"Analyzing file '{file_path}'")
     analysis: FileAnalysis = analyze_file(file_path=file_path, depth=depth)
 
     logger.info("Analysis complete!")
-    print_analysis(analysis)
+    print_analysis(analysis, scope_filter)
 
 
 if __name__ == "__main__":

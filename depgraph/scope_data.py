@@ -17,7 +17,7 @@ ScopeNode = Union[
 
 ScopeType = Literal[
     "module",
-    "class", 
+    "class",
     "function",
     "async_function",
     "lambda",
@@ -25,7 +25,7 @@ ScopeType = Literal[
     "setcomp",
     "dictcomp",
     "genexpr",
-    "match"
+    "match",
 ]
 
 
@@ -62,3 +62,14 @@ class FileAnalysis:
     file_path: str
     scopes: Dict[str, ScopeInfo]
     ast_tree: ast.Module
+
+    def get_scope_by_filter(self, scope_filter: str) -> Optional[ScopeInfo]:
+        """Get a specific scope by its fully qualified name.
+
+        Args:
+            scope_filter: The fully qualified scope name (e.g. "<module>.outer.Inner.method")
+
+        Returns:
+            The ScopeInfo for the requested scope if found, None otherwise
+        """
+        return self.scopes.get(scope_filter)
