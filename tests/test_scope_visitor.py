@@ -187,3 +187,67 @@ def test_empty_module():
     assert "<module>" in visitor.scopes
     assert visitor.scopes["<module>"].type == "module"
     assert visitor.scopes["<module>"].parent is None
+
+
+def test_list_comprehension():
+    """List comprehensions create proper scopes."""
+    code = "squares = [x*x for x in range(10)]"
+    visitor = ScopeVisitor()
+    visitor.visit(ast.parse(code))
+
+    assert "<module>.<listcomp_line_1>" in visitor.scopes
+    listcomp_scope = visitor.scopes["<module>.<listcomp_line_1>"]
+    assert listcomp_scope.type == "listcomp"
+    assert listcomp_scope.parent == "<module>"
+
+
+def test_set_comprehension():
+    """Set comprehensions create proper scopes."""
+    code = "unique_squares = {x*x for x in range(10)}"
+    visitor = ScopeVisitor()
+    visitor.visit(ast.parse(code))
+
+    assert "<module>.<setcomp_line_1>" in visitor.scopes
+    setcomp_scope = visitor.scopes["<module>.<setcomp_line_1>"]
+    assert setcomp_scope.type == "setcomp"
+    assert setcomp_scope.parent == "<module>"
+
+
+def test_dict_comprehension():
+    """Dictionary comprehensions create proper scopes."""
+    code = "squares_dict = {x: x*x for x in range(10)}"
+    visitor = ScopeVisitor()
+    visitor.visit(ast.parse(code))
+
+    assert "<module>.<dictcomp_line_1>" in visitor.scopes
+    dictcomp_scope = visitor.scopes["<module>.<dictcomp_line_1>"]
+    assert dictcomp_scope.type == "dictcomp"
+    assert dictcomp_scope.parent == "<module>"
+
+
+def test_generator_expression():
+    """Generator expressions create proper scopes."""
+    code = "squares_gen = (x*x for x in range(10))"
+    visitor = ScopeVisitor()
+    visitor.visit(ast.parse(code))
+
+    assert "<module>.<genexpr_line_1>" in visitor.scopes
+    genexpr_scope = visitor.scopes["<module>.<genexpr_line_1>"]
+    assert genexpr_scope.type == "genexpr"
+    assert genexpr_scope.parent == "<module>"
+
+
+def test_nested_comprehensions():
+    """Nested comprehensions create proper scope hierarchies."""
+    code = dedent("""
+        def outer():
+            matrix = [[x*y for x in range(5)] for y in range(5)]
+    """)
+    visitor = ScopeVisitor()
+    visitor.visit(ast.parse(code))
+
+    scopes = [s for s in visitor.scopes.values() if s.type == "listcomp"]
+    assert len(scopes) == 2
+
+    assert scopes[0].name == "<module>.outer.<listcomp_line_3>"
+    assert scopes[1].name == "<module>.outer.<listcomp_line_3>.<listcomp_line_3>"

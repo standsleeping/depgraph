@@ -1,6 +1,6 @@
 import ast
 from typing import Dict, Optional
-from depgraph.scope_data import ScopeInfo
+from depgraph.scope_data import ScopeInfo, ScopeType, ScopeNode
 
 
 class ScopeVisitor(ast.NodeVisitor):
@@ -34,7 +34,7 @@ class ScopeVisitor(ast.NodeVisitor):
         self.scopes: Dict[str, ScopeInfo] = {}
         self.current_scope: Optional[str] = None
 
-    def _make_scope_name(self, name: str) -> str:
+    def make_scope_name(self, name: str) -> str:
         """Creates a qualified scope name based on the current scope.
 
         Args:
@@ -45,7 +45,7 @@ class ScopeVisitor(ast.NodeVisitor):
         """
         return f"{self.current_scope}.{name}" if self.current_scope else name
 
-    def _add_scope(self, node: ast.AST, name: str, scope_type: str) -> None:
+    def add_scope(self, node: ScopeNode, name: str, scope_type: ScopeType) -> None:
         """Add a new scope to the visitor's scope dictionary.
 
         Args:
@@ -61,7 +61,7 @@ class ScopeVisitor(ast.NodeVisitor):
 
     def visit_Module(self, node: ast.Module) -> None:
         """Visit a module node, creating the root scope."""
-        self._add_scope(node, "<module>", "module")
+        self.add_scope(node, "<module>", "module")
         prev_scope = self.current_scope
         self.current_scope = "<module>"
         self.generic_visit(node)
@@ -69,8 +69,8 @@ class ScopeVisitor(ast.NodeVisitor):
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         """Visit a class definition, creating a new class scope."""
-        scope_name = self._make_scope_name(node.name)
-        self._add_scope(node, scope_name, "class")
+        scope_name = self.make_scope_name(node.name)
+        self.add_scope(node, scope_name, "class")
         prev_scope = self.current_scope
         self.current_scope = scope_name
         self.generic_visit(node)
@@ -78,8 +78,8 @@ class ScopeVisitor(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Visit a function definition, creating a new function scope."""
-        scope_name = self._make_scope_name(node.name)
-        self._add_scope(node, scope_name, "function")
+        scope_name = self.make_scope_name(node.name)
+        self.add_scope(node, scope_name, "function")
         prev_scope = self.current_scope
         self.current_scope = scope_name
         self.generic_visit(node)
@@ -87,8 +87,8 @@ class ScopeVisitor(ast.NodeVisitor):
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         """Visit an async function definition, creating a new function scope."""
-        scope_name = self._make_scope_name(node.name)
-        self._add_scope(node, scope_name, "async_function")
+        scope_name = self.make_scope_name(node.name)
+        self.add_scope(node, scope_name, "async_function")
         prev_scope = self.current_scope
         self.current_scope = scope_name
         self.generic_visit(node)
@@ -96,8 +96,44 @@ class ScopeVisitor(ast.NodeVisitor):
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
         """Visit a lambda expression, creating a new function scope."""
-        scope_name = self._make_scope_name(f"<lambda_line_{node.lineno}>")
-        self._add_scope(node, scope_name, "lambda")
+        scope_name = self.make_scope_name(f"<lambda_line_{node.lineno}>")
+        self.add_scope(node, scope_name, "lambda")
+        prev_scope = self.current_scope
+        self.current_scope = scope_name
+        self.generic_visit(node)
+        self.current_scope = prev_scope
+
+    def visit_ListComp(self, node: ast.ListComp) -> None:
+        """Visit a list comprehension, creating a new comprehension scope."""
+        scope_name = self.make_scope_name(f"<listcomp_line_{node.lineno}>")
+        self.add_scope(node, scope_name, "listcomp")
+        prev_scope = self.current_scope
+        self.current_scope = scope_name
+        self.generic_visit(node)
+        self.current_scope = prev_scope
+
+    def visit_SetComp(self, node: ast.SetComp) -> None:
+        """Visit a set comprehension, creating a new comprehension scope."""
+        scope_name = self.make_scope_name(f"<setcomp_line_{node.lineno}>")
+        self.add_scope(node, scope_name, "setcomp")
+        prev_scope = self.current_scope
+        self.current_scope = scope_name
+        self.generic_visit(node)
+        self.current_scope = prev_scope
+
+    def visit_DictComp(self, node: ast.DictComp) -> None:
+        """Visit a dictionary comprehension, creating a new comprehension scope."""
+        scope_name = self.make_scope_name(f"<dictcomp_line_{node.lineno}>")
+        self.add_scope(node, scope_name, "dictcomp")
+        prev_scope = self.current_scope
+        self.current_scope = scope_name
+        self.generic_visit(node)
+        self.current_scope = prev_scope
+
+    def visit_GeneratorExp(self, node: ast.GeneratorExp) -> None:
+        """Visit a generator expression, creating a new generator scope."""
+        scope_name = self.make_scope_name(f"<genexpr_line_{node.lineno}>")
+        self.add_scope(node, scope_name, "genexpr")
         prev_scope = self.current_scope
         self.current_scope = scope_name
         self.generic_visit(node)
