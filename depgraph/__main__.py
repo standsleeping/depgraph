@@ -1,5 +1,3 @@
-import ast
-from typing import Dict, List
 from depgraph.cli import parse_args
 from depgraph.logger import setup_logger
 
@@ -18,6 +16,7 @@ def main() -> None:
     # Import other modules after logger is configured
     from depgraph.analyze_file import analyze_file
     from depgraph.formatter import print_analysis
+    from depgraph.scope_data import FileAnalysis
 
     logger.debug("Starting analysis with parameters:")
     logger.debug(f"  file_path: {file_path}")
@@ -26,7 +25,7 @@ def main() -> None:
     logger.debug(f"  log_file: {log_file}")
 
     logger.info(f"Analyzing file '{file_path}'")
-    analysis: Dict[str, List[ast.AST]] = analyze_file(file_path=file_path, depth=depth)
+    analysis: FileAnalysis = analyze_file(file_path=file_path, depth=depth)
 
     logger.info("Analysis complete!")
     print_analysis(analysis)
