@@ -36,7 +36,12 @@ def test_analyze_function_scope(tmp_path):
 
     module = ast.parse(test_file.read_text())
     function_node = module.body[0]
-    scope = ScopeInfo(name="func", node=function_node, type="function")
+    scope = ScopeInfo(
+        name="func",
+        node=function_node,
+        type="function",
+        parent="<module>",
+    )
 
     analyzer = ScopeAssignmentAnalyzer()
     assignments = analyzer.analyze_scope(scope)
@@ -55,7 +60,12 @@ def test_analyze_empty_scope(tmp_path):
 
     module = ast.parse(test_file.read_text())
     function_node = module.body[0]
-    scope = ScopeInfo(name="empty", node=function_node, type="function")
+    scope = ScopeInfo(
+        name="empty",
+        node=function_node,
+        type="function",
+        parent="<module>",
+    )
 
     analyzer = ScopeAssignmentAnalyzer()
     assignments = analyzer.analyze_scope(scope)

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Optional, Union, Literal
+from typing import Dict, Optional, Union, Literal, get_args
 import ast
 
 ScopeNode = Union[
@@ -47,6 +47,44 @@ class ScopeInfo:
     node: ScopeNode
     type: ScopeType
     parent: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        """Validate scope information after initialization."""
+        valid_types = get_args(ScopeType)
+        if self.type not in valid_types:
+            raise TypeError(
+                f"Invalid scope type: {self.type}. "
+                f"Must be one of: {', '.join(valid_types)}"
+            )
+
+        node_type_mapping = {
+            "module": ast.Module,
+            "class": ast.ClassDef,
+            "function": ast.FunctionDef,
+            "async_function": ast.AsyncFunctionDef,
+            "lambda": ast.Lambda,
+            "listcomp": ast.ListComp,
+            "setcomp": ast.SetComp,
+            "dictcomp": ast.DictComp,
+            "genexpr": ast.GeneratorExp,
+            "match": ast.Match,
+        }
+
+        expected_type = node_type_mapping.get(self.type)
+        if expected_type and not isinstance(self.node, expected_type):
+            raise TypeError(
+                f"Invalid node type for scope type '{self.type}'. "
+                f"Expected {expected_type.__name__}, got {type(self.node).__name__}"
+            )
+
+        if not self.name:
+            raise ValueError("Scope name cannot be empty")
+
+        if self.type == "module" and self.name != "<module>":
+            raise ValueError("Module scope must be named '<module>'")
+
+        if self.type != "module" and not self.parent:
+            raise ValueError(f"Non-module scope '{self.name}' must have a parent scope")
 
 
 @dataclass
