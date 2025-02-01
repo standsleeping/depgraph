@@ -12,7 +12,7 @@ def test_basic_assignment(tmp_path):
     test_file = create_test_file(tmp_path, content)
 
     tree = ast.parse(test_file.read_text())
-    visitor = AssignmentVisitor()
+    visitor = AssignmentVisitor(scope_name="module")
     visitor.visit(tree)
 
     assert len(visitor.assignments) == 1
@@ -20,6 +20,7 @@ def test_basic_assignment(tmp_path):
     assert assignment.name == "x"
     assert assignment.type == "basic"
     assert isinstance(assignment.node, ast.Assign)
+    assert assignment.scope_name == "module"
 
 
 def test_augmented_assignment(tmp_path):
@@ -31,7 +32,7 @@ def test_augmented_assignment(tmp_path):
     test_file = create_test_file(tmp_path, content)
 
     tree = ast.parse(test_file.read_text())
-    visitor = AssignmentVisitor()
+    visitor = AssignmentVisitor(scope_name="module")
     visitor.visit(tree)
 
     assert len(visitor.assignments) == 1
@@ -39,6 +40,7 @@ def test_augmented_assignment(tmp_path):
     assert assignment.name == "x"
     assert assignment.type == "augmented"
     assert isinstance(assignment.node, ast.AugAssign)
+    assert assignment.scope_name == "module"
 
 
 def test_annotated_assignment(tmp_path):
@@ -50,7 +52,7 @@ def test_annotated_assignment(tmp_path):
     test_file = create_test_file(tmp_path, content)
 
     tree = ast.parse(test_file.read_text())
-    visitor = AssignmentVisitor()
+    visitor = AssignmentVisitor(scope_name="module")
     visitor.visit(tree)
 
     assert len(visitor.assignments) == 1
@@ -58,6 +60,7 @@ def test_annotated_assignment(tmp_path):
     assert assignment.name == "x"
     assert assignment.type == "annotated"
     assert isinstance(assignment.node, ast.AnnAssign)
+    assert assignment.scope_name == "module"
 
 
 def test_multiple_assignments(tmp_path):
@@ -71,12 +74,13 @@ def test_multiple_assignments(tmp_path):
     test_file = create_test_file(tmp_path, content)
 
     tree = ast.parse(test_file.read_text())
-    visitor = AssignmentVisitor()
+    visitor = AssignmentVisitor(scope_name="module")
     visitor.visit(tree)
 
     assert len(visitor.assignments) == 3
     assert {a.name for a in visitor.assignments} == {"x", "y", "z"}
     assert {a.type for a in visitor.assignments} == {"basic", "augmented", "annotated"}
+    assert all(a.scope_name == "module" for a in visitor.assignments)
 
 
 def test_ignore_complex_assignments(tmp_path):
@@ -90,7 +94,7 @@ def test_ignore_complex_assignments(tmp_path):
     test_file = create_test_file(tmp_path, content)
 
     tree = ast.parse(test_file.read_text())
-    visitor = AssignmentVisitor()
+    visitor = AssignmentVisitor(scope_name="module")
     visitor.visit(tree)
 
     assert len(visitor.assignments) == 0

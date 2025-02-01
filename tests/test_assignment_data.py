@@ -10,11 +10,12 @@ def test_assignment_data_creation():
         value=ast.Constant(value=1),
     )
 
-    assignment = AssignmentData(name="x", node=node, type="basic")
+    assignment = AssignmentData(name="x", node=node, type="basic", scope_name="module")
 
     assert assignment.name == "x"
     assert isinstance(assignment.node, ast.Assign)
     assert assignment.type == "basic"
+    assert assignment.scope_name == "module"
 
 
 def test_assignment_data_invalid_type():
@@ -29,4 +30,5 @@ def test_assignment_data_invalid_type():
             name="x",
             node=node,
             type="some-invalid-type",  # type: ignore
+            scope_name="module",
         )

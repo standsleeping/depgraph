@@ -21,11 +21,13 @@ class AssignmentData:
         name: The name of the variable being assigned
         node: The AST node representing the assignment (Assign, AugAssign, or AnnAssign)
         type: The type of assignment (basic, augmented, annotated, etc.)
+        scope_name: The fully qualified name of the scope containing this assignment
     """
 
     name: str
     node: AssignmentNode
     type: AssignmentType
+    scope_name: str
 
     def __post_init__(self) -> None:
         """Validate the assignment type after initialization."""
@@ -40,15 +42,16 @@ class AssignmentData:
 class AssignmentVisitor(ast.NodeVisitor):
     """AST visitor that collects variable assignments within a scope."""
 
-    def __init__(self) -> None:
+    def __init__(self, scope_name: str) -> None:
         self.assignments: List[AssignmentData] = []
+        self.scope_name = scope_name
 
     def visit_Assign(self, node: ast.Assign) -> None:
         """Basic assignments like 'x = 1'."""
         for target in node.targets:
             if isinstance(target, ast.Name):
                 self.assignments.append(
-                    AssignmentData(name=target.id, node=node, type="basic")
+                    AssignmentData(name=target.id, node=node, type="basic", scope_name=self.scope_name)
                 )
         self.generic_visit(node)
 
@@ -56,7 +59,7 @@ class AssignmentVisitor(ast.NodeVisitor):
         """Augmented assignments like 'x += 1'."""
         if isinstance(node.target, ast.Name):
             self.assignments.append(
-                AssignmentData(name=node.target.id, node=node, type="augmented")
+                AssignmentData(name=node.target.id, node=node, type="augmented", scope_name=self.scope_name)
             )
         self.generic_visit(node)
 
@@ -64,7 +67,7 @@ class AssignmentVisitor(ast.NodeVisitor):
         """Annotated assignments like 'x: int = 1'."""
         if isinstance(target := node.target, ast.Name):
             self.assignments.append(
-                AssignmentData(name=target.id, node=node, type="annotated")
+                AssignmentData(name=target.id, node=node, type="annotated", scope_name=self.scope_name)
             )
         self.generic_visit(node)
 
@@ -81,6 +84,6 @@ class ScopeAssignmentAnalyzer:
         Returns:
             A list of AssignmentData objects representing all assignments in the scope
         """
-        visitor = AssignmentVisitor()
+        visitor = AssignmentVisitor(scope.name)
         visitor.visit(scope.node)
         return visitor.assignments
