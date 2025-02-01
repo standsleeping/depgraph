@@ -1,6 +1,7 @@
 from depgraph.cli import parse_args
 from depgraph.logger import setup_logger
 
+
 def main() -> None:
     (
         file_path,
@@ -16,8 +17,9 @@ def main() -> None:
     # Import other modules after logger is configured
     from depgraph.analyze_file import analyze_file
     from depgraph.formatter import print_analysis
-    from depgraph.scope_data import FileAnalysis, ScopeInfo
+    from depgraph.scope_data import FileAnalysis, ScopeInfo, ScopeName
     from depgraph.assignment_analyzer import ScopeAssignmentAnalyzer
+
     logger.debug("Starting analysis with parameters:")
     logger.debug(f"  file_path: {file_path}")
     logger.debug(f"  depth: {depth}")
@@ -31,9 +33,9 @@ def main() -> None:
 
     module_scope_info: ScopeInfo
     if scope_filter:
-        module_scope_info = file_analysis.scopes[scope_filter]
+        module_scope_info = file_analysis.scopes[ScopeName(scope_filter)]
     else:
-        module_scope_info = file_analysis.scopes["<module>"]
+        module_scope_info = file_analysis.scopes[ScopeName("<module>")]
 
     analyzer = ScopeAssignmentAnalyzer()
 

@@ -1,6 +1,6 @@
 import ast
 from depgraph.assignment_analyzer import ScopeAssignmentAnalyzer
-from depgraph.scope_data import ScopeInfo
+from depgraph.scope_data import ScopeInfo, ScopeName
 from tests.conftest import create_test_file
 
 
@@ -14,7 +14,7 @@ def test_analyze_module_scope(tmp_path):
     test_file = create_test_file(tmp_path, content)
 
     module = ast.parse(test_file.read_text())
-    scope = ScopeInfo(name="<module>", node=module, type="module")
+    scope = ScopeInfo(name=ScopeName("<module>"), node=module, type="module")
 
     analyzer = ScopeAssignmentAnalyzer()
     assignments = analyzer.analyze_scope(scope)
@@ -37,10 +37,10 @@ def test_analyze_function_scope(tmp_path):
     module = ast.parse(test_file.read_text())
     function_node = module.body[0]
     scope = ScopeInfo(
-        name="func",
+        name=ScopeName("<module>.func"),
         node=function_node,
         type="function",
-        parent="<module>",
+        parent=ScopeName("<module>"),
     )
 
     analyzer = ScopeAssignmentAnalyzer()
@@ -61,10 +61,10 @@ def test_analyze_empty_scope(tmp_path):
     module = ast.parse(test_file.read_text())
     function_node = module.body[0]
     scope = ScopeInfo(
-        name="empty",
+        name=ScopeName("<module>.empty"),
         node=function_node,
         type="function",
-        parent="<module>",
+        parent=ScopeName("<module>"),
     )
 
     analyzer = ScopeAssignmentAnalyzer()

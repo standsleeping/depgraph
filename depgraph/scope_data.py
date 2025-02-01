@@ -2,6 +2,78 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Union, Literal, get_args
 import ast
 
+
+@dataclass(frozen=True)
+class ScopeName:
+    """Represents a fully qualified scope name in Python code.
+
+    A scope name is a dot-separated path representing the nesting of scopes,
+    starting from the module scope. For example:
+    - "<module>"
+    - "<module>.MyClass"
+    - "<module>.outer.Inner.method"
+    - "<module>.function.<lambda_line_1>"
+
+    Attributes:
+        value: The full scope name string
+    """
+
+    value: str
+
+    def __post_init__(self) -> None:
+        """Validate the scope name format."""
+        if not self.value:
+            raise ValueError("Scope name cannot be empty")
+
+        # Allow "<module>" and names that start with "<module>."
+        # Any other validation is handled by ScopeInfo
+        if self.value != "<module>" and "." in self.value and not self.value.startswith("<module>."):
+            raise ValueError("Hierarchical scope names must start with '<module>'")
+
+    @property
+    def is_module(self) -> bool:
+        """Whether this is the module scope."""
+        return self.value == "<module>"
+
+    @property
+    def parent(self) -> Optional["ScopeName"]:
+        """Get the parent scope name, if any."""
+        if self.is_module:
+            return None
+
+        last_dot = self.value.rfind(".")
+        if last_dot == -1:
+            return None
+
+        parent_str = self.value[:last_dot]
+        if parent_str == "<module":  # Handle the case of direct module children
+            parent_str = "<module>"
+        return ScopeName(parent_str)
+
+    @property
+    def local_name(self) -> str:
+        """Get the local name of this scope (without parent path)."""
+        return self.value.rsplit(".", 1)[-1]
+
+    def child(self, name: str) -> "ScopeName":
+        """Create a child scope name under this scope.
+
+        Args:
+            name: The local name of the child scope
+
+        Returns:
+            A new ScopeName representing the child scope
+        """
+        return ScopeName(f"{self.value}.{name}")
+
+    def __str__(self) -> str:
+        return self.value
+
+    def __bool__(self) -> bool:
+        """Return True if the scope name is not empty."""
+        return bool(self.value)
+
+
 ScopeNode = Union[
     ast.Module,
     ast.ClassDef,
@@ -37,16 +109,16 @@ class ScopeInfo:
     This could be a module, class, function, or comprehension scope.
 
     Attributes:
-        name: The fully qualified name of the scope (e.g. "module.class.function")
+        name: The fully qualified name of the scope (e.g. "<module>.class.function")
         node: The AST node that defines this scope
         type: The type of scope (module, class, function, etc.)
         parent: The name of the parent scope, if any
     """
 
-    name: str
+    name: ScopeName
     node: ScopeNode
     type: ScopeType
-    parent: Optional[str] = None
+    parent: Optional[ScopeName] = None
 
     def __post_init__(self) -> None:
         """Validate scope information after initialization."""
@@ -80,7 +152,7 @@ class ScopeInfo:
         if not self.name:
             raise ValueError("Scope name cannot be empty")
 
-        if self.type == "module" and self.name != "<module>":
+        if self.type == "module" and not self.name.is_module:
             raise ValueError("Module scope must be named '<module>'")
 
         if self.type != "module" and not self.parent:
@@ -98,7 +170,7 @@ class FileAnalysis:
     """
 
     file_path: str
-    scopes: Dict[str, ScopeInfo]
+    scopes: Dict[ScopeName, ScopeInfo]
     ast_tree: ast.Module
 
     def get_scope_by_filter(self, scope_filter: str) -> Optional[ScopeInfo]:
@@ -110,4 +182,4 @@ class FileAnalysis:
         Returns:
             The ScopeInfo for the requested scope if found, None otherwise
         """
-        return self.scopes.get(scope_filter)
+        return self.scopes.get(ScopeName(scope_filter))

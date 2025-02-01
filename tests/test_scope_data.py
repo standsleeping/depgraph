@@ -1,13 +1,13 @@
 import ast
 import pytest
-from depgraph.scope_data import ScopeInfo
+from depgraph.scope_data import ScopeInfo, ScopeName
 
 
 def test_valid_module_scope():
     """Module scope can be created with valid parameters."""
     node = ast.Module(body=[], type_ignores=[])
-    scope = ScopeInfo(name="<module>", node=node, type="module")
-    assert scope.name == "<module>"
+    scope = ScopeInfo(name=ScopeName("<module>"), node=node, type="module")
+    assert str(scope.name) == "<module>"
     assert scope.type == "module"
     assert scope.parent is None
 
@@ -21,14 +21,14 @@ def test_valid_function_scope():
         decorator_list=[],
     )
     scope = ScopeInfo(
-        name="<module>.func",
+        name=ScopeName("<module>.func"),
         node=node,
         type="function",
-        parent="<module>",
+        parent=ScopeName("<module>"),
     )
-    assert scope.name == "<module>.func"
+    assert str(scope.name) == "<module>.func"
     assert scope.type == "function"
-    assert scope.parent == "<module>"
+    assert str(scope.parent) == "<module>"
 
 
 def test_invalid_scope_type():
@@ -36,7 +36,7 @@ def test_invalid_scope_type():
     node = ast.Module(body=[], type_ignores=[])
     with pytest.raises(TypeError, match="Invalid scope type"):
         ScopeInfo(
-            name="<module>",
+            name=ScopeName("<module>"),
             node=node,
             type="invalid_type",  # type: ignore
         )
@@ -53,10 +53,10 @@ def test_mismatched_node_type():
     )
     with pytest.raises(TypeError, match="Invalid node type for scope type"):
         ScopeInfo(
-            name="<module>.func",
+            name=ScopeName("<module>.func"),
             node=node,
             type="function",
-            parent="<module>",
+            parent=ScopeName("<module>"),
         )
 
 
@@ -65,7 +65,7 @@ def test_empty_scope_name():
     node = ast.Module(body=[], type_ignores=[])
     with pytest.raises(ValueError, match="Scope name cannot be empty"):
         ScopeInfo(
-            name="",
+            name=ScopeName(""),
             node=node,
             type="module",
         )
@@ -76,7 +76,7 @@ def test_invalid_module_name():
     node = ast.Module(body=[], type_ignores=[])
     with pytest.raises(ValueError, match="Module scope must be named"):
         ScopeInfo(
-            name="not_module",
+            name=ScopeName("not_module"),
             node=node,
             type="module",
         )
@@ -92,7 +92,7 @@ def test_missing_parent():
     )
     with pytest.raises(ValueError, match="must have a parent scope"):
         ScopeInfo(
-            name="func",
+            name=ScopeName("func"),
             node=node,
             type="function",
         )

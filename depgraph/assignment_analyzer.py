@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Literal, Union, get_args
 import ast
-from .scope_data import ScopeInfo
+from .scope_data import ScopeInfo, ScopeName
 
 
 AssignmentType = Literal["basic", "augmented", "annotated"]
@@ -27,7 +27,7 @@ class AssignmentData:
     name: str
     node: AssignmentNode
     type: AssignmentType
-    scope_name: str
+    scope_name: ScopeName
 
     def __post_init__(self) -> None:
         """Validate the assignment type after initialization."""
@@ -42,7 +42,7 @@ class AssignmentData:
 class AssignmentVisitor(ast.NodeVisitor):
     """AST visitor that collects variable assignments within a scope."""
 
-    def __init__(self, scope_name: str) -> None:
+    def __init__(self, scope_name: ScopeName) -> None:
         self.assignments: List[AssignmentData] = []
         self.scope_name = scope_name
 

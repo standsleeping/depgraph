@@ -1,7 +1,7 @@
 import ast
 from textwrap import dedent
 from depgraph.scope_visitor import ScopeVisitor
-from depgraph.scope_data import ScopeInfo
+from depgraph.scope_data import ScopeInfo, ScopeName
 
 
 def test_module_scope():
@@ -11,8 +11,9 @@ def test_module_scope():
     visitor = ScopeVisitor()
     visitor.visit(tree)
 
-    assert "<module>" in visitor.scopes
-    scope_info = visitor.scopes["<module>"]
+    module_name = ScopeName("<module>")
+    assert module_name in visitor.scopes
+    scope_info = visitor.scopes[module_name]
     assert scope_info.type == "module"
 
 
@@ -26,8 +27,9 @@ def test_function_scope():
     visitor = ScopeVisitor()
     visitor.visit(tree)
 
-    assert "<module>.my_function" in visitor.scopes
-    scope_info = visitor.scopes["<module>.my_function"]
+    func_name = ScopeName("<module>.my_function")
+    assert func_name in visitor.scopes
+    scope_info = visitor.scopes[func_name]
     assert scope_info.type == "function"
 
 
@@ -41,8 +43,9 @@ def test_class_scope():
     visitor = ScopeVisitor()
     visitor.visit(tree)
 
-    assert "<module>.MyClass" in visitor.scopes
-    scope_info = visitor.scopes["<module>.MyClass"]
+    class_name = ScopeName("<module>.MyClass")
+    assert class_name in visitor.scopes
+    scope_info = visitor.scopes[class_name]
     assert scope_info.type == "class"
 
 
@@ -57,26 +60,28 @@ def test_nested_scopes():
     visitor = ScopeVisitor()
     visitor.visit(ast.parse(code))
 
-    assert set(visitor.scopes.keys()) == {
-        "<module>",
-        "<module>.outer",
-        "<module>.outer.Inner",
-        "<module>.outer.Inner.method",
+    expected_scopes = {
+        ScopeName("<module>"),
+        ScopeName("<module>.outer"),
+        ScopeName("<module>.outer.Inner"),
+        ScopeName("<module>.outer.Inner.method"),
     }
 
-    module_scope = visitor.scopes["<module>"]
+    assert set(visitor.scopes.keys()) == expected_scopes
+
+    module_scope = visitor.scopes[ScopeName("<module>")]
     assert module_scope.parent is None
 
-    outer_scope = visitor.scopes["<module>.outer"]
-    assert outer_scope.parent == "<module>"
+    outer_scope = visitor.scopes[ScopeName("<module>.outer")]
+    assert str(outer_scope.parent) == "<module>"
     assert outer_scope.type == "function"
 
-    inner_scope = visitor.scopes["<module>.outer.Inner"]
-    assert inner_scope.parent == "<module>.outer"
+    inner_scope = visitor.scopes[ScopeName("<module>.outer.Inner")]
+    assert str(inner_scope.parent) == "<module>.outer"
     assert inner_scope.type == "class"
 
-    method_scope = visitor.scopes["<module>.outer.Inner.method"]
-    assert method_scope.parent == "<module>.outer.Inner"
+    method_scope = visitor.scopes[ScopeName("<module>.outer.Inner.method")]
+    assert str(method_scope.parent) == "<module>.outer.Inner"
     assert method_scope.type == "function"
 
 
@@ -89,10 +94,11 @@ def test_async_function():
     visitor = ScopeVisitor()
     visitor.visit(ast.parse(code))
 
-    assert "<module>.handler" in visitor.scopes
-    handler_scope = visitor.scopes["<module>.handler"]
+    handler_name = ScopeName("<module>.handler")
+    assert handler_name in visitor.scopes
+    handler_scope = visitor.scopes[handler_name]
     assert handler_scope.type == "async_function"
-    assert handler_scope.parent == "<module>"
+    assert str(handler_scope.parent) == "<module>"
 
 
 def test_lambda_scope():
@@ -101,10 +107,11 @@ def test_lambda_scope():
     visitor = ScopeVisitor()
     visitor.visit(ast.parse(code))
 
-    assert "<module>.<lambda_line_1>" in visitor.scopes
-    lambda_scope = visitor.scopes["<module>.<lambda_line_1>"]
+    lambda_name = ScopeName("<module>.<lambda_line_1>")
+    assert lambda_name in visitor.scopes
+    lambda_scope = visitor.scopes[lambda_name]
     assert lambda_scope.type == "lambda"
-    assert lambda_scope.parent == "<module>"
+    assert str(lambda_scope.parent) == "<module>"
 
 
 def test_multiple_lambdas():
@@ -120,13 +127,13 @@ def test_multiple_lambdas():
     assert len(lambda_scopes) == 2
 
     # Check that we have two distinct lambda scopes with correct line numbers
-    lambda_names = {s.name for s in lambda_scopes}
+    lambda_names = {str(s.name) for s in lambda_scopes}
     assert len(lambda_names) == 2
     assert "<module>.<lambda_line_2>" in lambda_names
     assert "<module>.<lambda_line_3>" in lambda_names
 
     # Verify parent relationships
-    assert all(s.parent == "<module>" for s in lambda_scopes)
+    assert all(str(s.parent) == "<module>" for s in lambda_scopes)
 
 
 def test_scope_info_attributes():
@@ -134,12 +141,13 @@ def test_scope_info_attributes():
     visitor = ScopeVisitor()
     visitor.visit(ast.parse("def func(): pass"))
 
-    func_scope = visitor.scopes["<module>.func"]
+    func_name = ScopeName("<module>.func")
+    func_scope = visitor.scopes[func_name]
     assert isinstance(func_scope, ScopeInfo)
-    assert func_scope.name == "<module>.func"
+    assert str(func_scope.name) == "<module>.func"
     assert isinstance(func_scope.node, ast.FunctionDef)
     assert func_scope.type == "function"
-    assert func_scope.parent == "<module>"
+    assert str(func_scope.parent) == "<module>"
 
 
 def test_multiple_classes_and_functions():
@@ -165,14 +173,14 @@ def test_multiple_classes_and_functions():
     visitor.visit(tree)
 
     expected_scopes = {
-        "<module>",
-        "<module>.top_level",
-        "<module>.FirstClass",
-        "<module>.FirstClass.method1",
-        "<module>.FirstClass.method2",
-        "<module>.SecondClass",
-        "<module>.SecondClass.method",
-        "<module>.SecondClass.method.nested",
+        ScopeName("<module>"),
+        ScopeName("<module>.top_level"),
+        ScopeName("<module>.FirstClass"),
+        ScopeName("<module>.FirstClass.method1"),
+        ScopeName("<module>.FirstClass.method2"),
+        ScopeName("<module>.SecondClass"),
+        ScopeName("<module>.SecondClass.method"),
+        ScopeName("<module>.SecondClass.method.nested"),
     }
 
     assert set(visitor.scopes.keys()) == expected_scopes
@@ -184,9 +192,10 @@ def test_empty_module():
     visitor.visit(ast.parse(""))
 
     assert len(visitor.scopes) == 1
-    assert "<module>" in visitor.scopes
-    assert visitor.scopes["<module>"].type == "module"
-    assert visitor.scopes["<module>"].parent is None
+    module_name = ScopeName("<module>")
+    assert module_name in visitor.scopes
+    assert visitor.scopes[module_name].type == "module"
+    assert visitor.scopes[module_name].parent is None
 
 
 def test_list_comprehension():
@@ -195,10 +204,11 @@ def test_list_comprehension():
     visitor = ScopeVisitor()
     visitor.visit(ast.parse(code))
 
-    assert "<module>.<listcomp_line_1>" in visitor.scopes
-    listcomp_scope = visitor.scopes["<module>.<listcomp_line_1>"]
+    listcomp_name = ScopeName("<module>.<listcomp_line_1>")
+    assert listcomp_name in visitor.scopes
+    listcomp_scope = visitor.scopes[listcomp_name]
     assert listcomp_scope.type == "listcomp"
-    assert listcomp_scope.parent == "<module>"
+    assert str(listcomp_scope.parent) == "<module>"
 
 
 def test_set_comprehension():
@@ -207,10 +217,11 @@ def test_set_comprehension():
     visitor = ScopeVisitor()
     visitor.visit(ast.parse(code))
 
-    assert "<module>.<setcomp_line_1>" in visitor.scopes
-    setcomp_scope = visitor.scopes["<module>.<setcomp_line_1>"]
+    setcomp_name = ScopeName("<module>.<setcomp_line_1>")
+    assert setcomp_name in visitor.scopes
+    setcomp_scope = visitor.scopes[setcomp_name]
     assert setcomp_scope.type == "setcomp"
-    assert setcomp_scope.parent == "<module>"
+    assert str(setcomp_scope.parent) == "<module>"
 
 
 def test_dict_comprehension():
@@ -219,10 +230,11 @@ def test_dict_comprehension():
     visitor = ScopeVisitor()
     visitor.visit(ast.parse(code))
 
-    assert "<module>.<dictcomp_line_1>" in visitor.scopes
-    dictcomp_scope = visitor.scopes["<module>.<dictcomp_line_1>"]
+    dictcomp_name = ScopeName("<module>.<dictcomp_line_1>")
+    assert dictcomp_name in visitor.scopes
+    dictcomp_scope = visitor.scopes[dictcomp_name]
     assert dictcomp_scope.type == "dictcomp"
-    assert dictcomp_scope.parent == "<module>"
+    assert str(dictcomp_scope.parent) == "<module>"
 
 
 def test_generator_expression():
@@ -231,10 +243,11 @@ def test_generator_expression():
     visitor = ScopeVisitor()
     visitor.visit(ast.parse(code))
 
-    assert "<module>.<genexpr_line_1>" in visitor.scopes
-    genexpr_scope = visitor.scopes["<module>.<genexpr_line_1>"]
+    genexpr_name = ScopeName("<module>.<genexpr_line_1>")
+    assert genexpr_name in visitor.scopes
+    genexpr_scope = visitor.scopes[genexpr_name]
     assert genexpr_scope.type == "genexpr"
-    assert genexpr_scope.parent == "<module>"
+    assert str(genexpr_scope.parent) == "<module>"
 
 
 def test_nested_comprehensions():
@@ -249,5 +262,5 @@ def test_nested_comprehensions():
     scopes = [s for s in visitor.scopes.values() if s.type == "listcomp"]
     assert len(scopes) == 2
 
-    assert scopes[0].name == "<module>.outer.<listcomp_line_3>"
-    assert scopes[1].name == "<module>.outer.<listcomp_line_3>.<listcomp_line_3>"
+    assert str(scopes[0].name) == "<module>.outer.<listcomp_line_3>"
+    assert str(scopes[1].name) == "<module>.outer.<listcomp_line_3>.<listcomp_line_3>"
