@@ -1,5 +1,15 @@
+import pytest
 from pathlib import Path
 from textwrap import dedent
+from depgraph.import_crawler import ImportCrawler
+
+
+@pytest.fixture
+def crawler(tmp_path):
+    """Create a crawler instance with a temporary root file."""
+    root_file = tmp_path / "root.py"
+    root_file.touch()
+    return ImportCrawler(str(root_file))
 
 
 def create_test_file(tmp_path: Path, content: str) -> Path:
