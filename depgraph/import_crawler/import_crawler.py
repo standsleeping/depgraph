@@ -1,13 +1,15 @@
 import ast
 import os
+import logging
 import sysconfig
 from importlib.util import find_spec
 from typing import Optional
 from .module_info import ModuleInfo
+from ..logger import setup_logger
 
 
 class ImportCrawler:
-    def __init__(self, root_file: str) -> None:
+    def __init__(self, root_file: str, logger: logging.Logger | None = None) -> None:
         self.root_file = os.path.abspath(root_file)
         self.project_root = os.path.dirname(self.root_file)
         self.visited: set[str] = set()
@@ -15,16 +17,24 @@ class ImportCrawler:
         paths = sysconfig.get_paths().values()
         self.stdlib_paths = set([os.path.abspath(p) for p in paths])
 
+        if logger is None:
+            logger = setup_logger()
+        self.logger = logger
+        self.logger.debug(f"Initialized with root: {os.path.basename(self.root_file)}")
+
     def build_graph(self, file_path: str) -> None:
         """Recursively builds the import graph."""
         file_path = os.path.abspath(file_path)
         if file_path in self.visited or not file_path.endswith(".py"):
+            self.logger.debug(f"Skipping file: {os.path.basename(file_path)}")
             return
 
+        self.logger.info(f"Building graph for: {os.path.basename(file_path)}")
         self.visited.add(file_path)
 
         tree = self.parse_file(file_path)
         if tree is None:
+            self.logger.warning(f"Failed to parse file: {os.path.basename(file_path)}")
             return
 
         module_dir = os.path.dirname(file_path)
@@ -58,12 +68,15 @@ class ImportCrawler:
         self, module_name: str, current_file: str, search_dir: str
     ) -> None:
         """Resolves the module path and updates the graph."""
+        self.logger.debug(f"Resolving import {module_name} from {current_file}")
         module_path = self.find_module(module_name, search_dir)
         if module_path:
             current = ModuleInfo(current_file)
             module = ModuleInfo(module_path)
             self.graph.setdefault(current, set()).add(module)
             self.build_graph(module_path)
+        else:
+            self.logger.warning(f"Could not resolve {module_name}")
 
     def find_module(self, module_name: str, search_dir: str) -> Optional[str]:
         """
