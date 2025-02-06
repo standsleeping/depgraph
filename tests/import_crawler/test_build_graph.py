@@ -1,5 +1,7 @@
 from textwrap import dedent
 
+from depgraph.import_crawler.module_info import ModuleInfo
+
 
 def test_build_graph_single_file(crawler, tmp_path):
     """Builds graph for a single file with no imports."""
@@ -30,7 +32,10 @@ def test_build_graph_with_imports(crawler, tmp_path):
     crawler.build_graph(str(main_file))
 
     assert str(main_file) in crawler.visited
-    assert crawler.graph[str(main_file)] == {str(module1), str(module2)}
+    key = ModuleInfo(str(main_file))
+    value1 = ModuleInfo(str(module1))
+    value2 = ModuleInfo(str(module2))
+    assert crawler.graph[key] == {value1, value2}
 
 
 def test_build_graph_nested_imports(crawler, tmp_path):
@@ -52,9 +57,17 @@ def test_build_graph_nested_imports(crawler, tmp_path):
     assert str(module2) in crawler.visited
     assert str(module3) in crawler.visited
 
-    assert crawler.graph[str(main_file)] == {str(module1)}
-    assert crawler.graph[str(module1)] == {str(module2)}
-    assert crawler.graph[str(module2)] == {str(module3)}
+    key = ModuleInfo(str(main_file))
+    value1 = ModuleInfo(str(module1))
+    assert crawler.graph[key] == {value1}
+
+    key = ModuleInfo(str(module1))
+    value2 = ModuleInfo(str(module2))
+    assert crawler.graph[key] == {value2}
+
+    key = ModuleInfo(str(module2))
+    value3 = ModuleInfo(str(module3))
+    assert crawler.graph[key] == {value3}
 
 
 def test_build_graph_circular_imports(crawler, tmp_path):
@@ -69,8 +82,14 @@ def test_build_graph_circular_imports(crawler, tmp_path):
 
     assert str(module1) in crawler.visited
     assert str(module2) in crawler.visited
-    assert crawler.graph[str(module1)] == {str(module2)}
-    assert crawler.graph[str(module2)] == {str(module1)}
+
+    key = ModuleInfo(str(module1))
+    value2 = ModuleInfo(str(module2))
+    assert crawler.graph[key] == {value2}
+
+    key = ModuleInfo(str(module2))
+    value1 = ModuleInfo(str(module1))
+    assert crawler.graph[key] == {value1}
 
 
 def test_build_graph_package_imports(crawler, tmp_path):
@@ -91,7 +110,9 @@ def test_build_graph_package_imports(crawler, tmp_path):
 
     assert str(main_file) in crawler.visited
     assert str(init_file) in crawler.visited
-    assert crawler.graph[str(main_file)] == {str(init_file)}
+    key = ModuleInfo(str(main_file))
+    value = ModuleInfo(str(init_file))
+    assert crawler.graph[key] == {value}
 
 
 def test_build_graph_nonexistent_import(crawler, tmp_path):

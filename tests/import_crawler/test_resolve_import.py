@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from depgraph.import_crawler.module_info import ModuleInfo
+
 
 def test_resolve_local_import(crawler, tmp_path):
     """Successfully resolves and adds local module to graph."""
@@ -11,7 +13,10 @@ def test_resolve_local_import(crawler, tmp_path):
 
     crawler.resolve_import("local_module", str(current_file), str(tmp_path))
 
-    assert crawler.graph[str(current_file)] == {str(local_module)}
+    key = ModuleInfo(str(current_file))
+    value = ModuleInfo(str(local_module))
+
+    assert crawler.graph[key] == {value}
 
 
 def test_resolve_nonexistent_module(crawler, tmp_path):
@@ -38,7 +43,11 @@ def test_resolve_multiple_imports(crawler, tmp_path):
     crawler.resolve_import("module1", str(current_file), str(tmp_path))
     crawler.resolve_import("module2", str(current_file), str(tmp_path))
 
-    assert crawler.graph[str(current_file)] == {str(module1), str(module2)}
+    key = ModuleInfo(str(current_file))
+    value1 = ModuleInfo(str(module1))
+    value2 = ModuleInfo(str(module2))
+
+    assert crawler.graph[key] == {value1, value2}
 
 
 def test_resolve_recursive_imports(crawler, tmp_path):
@@ -73,7 +82,9 @@ def test_resolve_duplicate_imports(crawler, tmp_path):
     crawler.resolve_import("local_module", str(current_file), str(tmp_path))
 
     # Only appears once in the graph
-    assert crawler.graph[str(current_file)] == {str(local_module)}
+    key = ModuleInfo(str(current_file))
+    value = ModuleInfo(str(local_module))
+    assert crawler.graph[key] == {value}
 
 
 def test_resolve_import_updates_existing_set(crawler, tmp_path):
@@ -88,13 +99,18 @@ def test_resolve_import_updates_existing_set(crawler, tmp_path):
     current_file.touch()
 
     # Manually add existing import
-    crawler.graph[str(current_file)] = {str(module1)}
+    key = ModuleInfo(str(current_file))
+    value1 = ModuleInfo(str(module1))
+    crawler.graph[key] = {value1}
 
     # Resolve another import
     crawler.resolve_import("module2", str(current_file), str(tmp_path))
 
     # Preserves existing import and add new one
-    assert crawler.graph[str(current_file)] == {str(module1), str(module2)}
+    key = ModuleInfo(str(current_file))
+    value1 = ModuleInfo(str(module1))
+    value2 = ModuleInfo(str(module2))
+    assert crawler.graph[key] == {value1, value2}
 
 
 def test_resolve_import_circular_reference(crawler, tmp_path):

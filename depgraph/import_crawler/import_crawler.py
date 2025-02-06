@@ -3,6 +3,7 @@ import os
 import sysconfig
 from importlib.util import find_spec
 from typing import Optional
+from .module_info import ModuleInfo
 
 
 class ImportCrawler:
@@ -10,7 +11,7 @@ class ImportCrawler:
         self.root_file = os.path.abspath(root_file)
         self.project_root = os.path.dirname(self.root_file)
         self.visited: set[str] = set()
-        self.graph: dict[str, set[str]] = {}
+        self.graph: dict[ModuleInfo, set[ModuleInfo]] = {}
         paths = sysconfig.get_paths().values()
         self.stdlib_paths = set([os.path.abspath(p) for p in paths])
 
@@ -59,7 +60,9 @@ class ImportCrawler:
         """Resolves the module path and updates the graph."""
         module_path = self.find_module(module_name, search_dir)
         if module_path:
-            self.graph.setdefault(current_file, set()).add(module_path)
+            current = ModuleInfo(current_file)
+            module = ModuleInfo(module_path)
+            self.graph.setdefault(current, set()).add(module)
             self.build_graph(module_path)
 
     def find_module(self, module_name: str, search_dir: str) -> Optional[str]:
