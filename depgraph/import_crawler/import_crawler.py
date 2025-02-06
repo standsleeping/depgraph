@@ -131,3 +131,9 @@ class ImportCrawler:
             return False
 
         return True
+
+    def print_graph(self) -> None:
+        """Prints the graph in a human-readable format."""
+        for key, set in self.graph.items():
+            printed_set = ", ".join([str(module) for module in set])
+            print(f"{key} -> [{printed_set}]")
