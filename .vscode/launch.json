@@ -22,7 +22,8 @@
       "request": "launch",
       "module": "depgraph.import_crawler",
       "args": [
-        "${workspaceFolder}/depgraph/analyze_file.py",
+        // "${workspaceFolder}/depgraph/analyze_file.py",
+        "/Users/standsleeping/Developer/prodwatch/prodwatch/tests/manager/test_manager.py",
         "--log-level",
         "DEBUG",
       ],

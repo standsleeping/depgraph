@@ -1,6 +1,7 @@
+import pytest
 from textwrap import dedent
-
 from depgraph.import_crawler.module_info import ModuleInfo
+from depgraph.import_crawler.import_crawler import ImportCrawler
 
 
 def test_build_graph_single_file(crawler, tmp_path):
@@ -157,3 +158,89 @@ def test_build_graph_non_py_file(crawler, tmp_path):
 
     assert str(test_file) not in crawler.visited
     assert str(test_file) not in crawler.graph
+
+
+@pytest.fixture
+def nested_package_structure(tmp_path):
+    """
+    Creates a nested package structure for testing import resolution:
+
+    tmp_path/
+    ├── root_pkg/
+    │   ├── __init__.py
+    │   ├── utils.py
+    │   └── subpkg/
+    │       ├── __init__.py
+    │       └── deep/
+    │           ├── __init__.py
+    │           └── module.py
+    """
+    root_pkg = tmp_path / "root_pkg"
+    subpkg = root_pkg / "subpkg"
+    deep_pkg = subpkg / "deep"
+
+    # Create directories
+    for dir_path in [root_pkg, subpkg, deep_pkg]:
+        dir_path.mkdir(parents=True)
+        (dir_path / "__init__.py").touch()
+
+    # Create some module files
+    (root_pkg / "utils.py").write_text("def helper(): pass")
+    (deep_pkg / "module.py").write_text("from ...utils import helper")
+
+    return tmp_path
+
+
+def test_find_module_with_package_expansion(nested_package_structure):
+    """Resolves imports by expanding to outer package root."""
+    deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
+    crawler = ImportCrawler(str(deep_module))
+
+    # Try to find utils.py from the deep module directory
+    search_dir = str(nested_package_structure / "root_pkg/subpkg/deep")
+    module_path = crawler.find_module("utils", search_dir)
+
+    assert module_path is not None
+    assert module_path == str(nested_package_structure / "root_pkg/utils.py")
+
+
+def test_find_module_no_expansion_needed(nested_package_structure):
+    """Finds module normally when expansion isn't needed."""
+    root_init = nested_package_structure / "root_pkg/__init__.py"
+    crawler = ImportCrawler(str(root_init))
+
+    # Try to find utils.py from the root package directory
+    search_dir = str(nested_package_structure / "root_pkg")
+    module_path = crawler.find_module("utils", search_dir)
+
+    assert module_path is not None
+    assert module_path == str(nested_package_structure / "root_pkg/utils.py")
+
+
+def test_find_module_expansion_fails(nested_package_structure):
+    """Returns None when expansion doesn't help."""
+    deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
+    crawler = ImportCrawler(str(deep_module))
+
+    # Try to find a non-existent module
+    search_dir = str(nested_package_structure / "root_pkg/subpkg/deep")
+    module_path = crawler.find_module("nonexistent", search_dir)
+
+    assert module_path is None
+
+
+def test_find_module_respects_project_root(nested_package_structure, tmp_path):
+    """Doesn't resolve modules outside project root."""
+    # Create a module outside the project root
+    outside_pkg = tmp_path / "outside_pkg"
+    outside_pkg.mkdir()
+    (outside_pkg / "__init__.py").touch()
+    (outside_pkg / "external.py").touch()
+
+    deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
+    crawler = ImportCrawler(str(deep_module))
+
+    # Try to find the external module
+    module_path = crawler.find_module("external", str(outside_pkg))
+
+    assert module_path is None

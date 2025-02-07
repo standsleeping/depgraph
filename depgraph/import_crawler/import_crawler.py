@@ -6,6 +6,7 @@ from importlib.util import find_spec
 from typing import Optional
 from .module_info import ModuleInfo
 from ..logger import setup_logger
+from .package_finder import find_outermost_package_root
 
 
 class ImportCrawler:
@@ -83,6 +84,7 @@ class ImportCrawler:
         Attempts to find the module file given its name by:
         1. Checking relative to the current directory
         2. Searching through sys.path
+        3. If above fails, try expanding search to outer package roots
         """
         # First try relative to current directory
         local_module = self.find_local_module(module_name, search_dir)
@@ -93,6 +95,21 @@ class ImportCrawler:
         module_path = self.find_module_in_syspath(module_name)
         if module_path:
             return module_path
+
+        # If still not found, try expanding search to outer package roots
+        outer_root = find_outermost_package_root(search_dir, self.logger)
+        if outer_root != search_dir:  # Only try if we found a different root
+            self.logger.debug(f"Attempting wider search from outer root: {outer_root}")
+            # Temporarily expand project root to include outer package
+            original_root = self.project_root
+            self.project_root = outer_root
+            try:
+                local_module = self.find_local_module(module_name, outer_root)
+                if local_module:
+                    return local_module
+            finally:
+                # Restore original project root
+                self.project_root = original_root
 
         return None
 
