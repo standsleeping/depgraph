@@ -135,3 +135,71 @@ def test_find_module_expansion_fails(tmp_path):
     # Try to find non-existent module
     result = crawler.find_module("nonexistent", str(subpkg))
     assert result is None
+
+
+def test_find_module_with_middle_package_expansion(tmp_path):
+    """Expands search to middle package for double-dot relative imports."""
+    # Create nested package structure
+    root_pkg = tmp_path / "root_pkg"
+    subpkg = root_pkg / "subpkg"
+    deep_pkg = subpkg / "deep"
+
+    for dir_path in [root_pkg, subpkg, deep_pkg]:
+        dir_path.mkdir(parents=True)
+        (dir_path / "__init__.py").touch()
+
+    # Create target module in middle package (subpkg)
+    utils_module = subpkg / "utils.py"
+    utils_module.touch()
+
+    # Create a module in the deep package that we'll use as the starting point
+    deep_module = deep_pkg / "module.py"
+    deep_module.write_text("from ..utils import helper")
+
+    # Initialize crawler with the deep module as the root file
+    crawler = ImportCrawler(str(deep_module))
+
+    # Try to find utils.py from deep inside the package
+    result = crawler.find_module("utils", str(deep_pkg))
+    assert result == str(utils_module)
+
+
+def test_find_module_with_recursive_package_search(tmp_path):
+    """Recursively searches through all package levels to find modules."""
+    # Create nested package structure
+    root_pkg = tmp_path / "root_pkg"
+    subpkg1 = root_pkg / "subpkg1"
+    subpkg2 = subpkg1 / "subpkg2"
+    deep_pkg = subpkg2 / "deep"
+
+    for dir_path in [root_pkg, subpkg1, subpkg2, deep_pkg]:
+        dir_path.mkdir(parents=True)
+        (dir_path / "__init__.py").touch()
+
+    # Create target modules at different levels
+    root_module = root_pkg / "root_utils.py"
+    root_module.touch()
+    
+    mid_module = subpkg1 / "mid_utils.py"
+    mid_module.touch()
+    
+    sub_module = subpkg2 / "sub_utils.py"
+    sub_module.touch()
+
+    # Create a module in the deepest package that we'll use as the starting point
+    deep_module = deep_pkg / "module.py"
+    deep_module.write_text(
+        "from ...sub_utils import helper\n"
+        "from ....mid_utils import other\n"
+        "from .....root_utils import thing"
+    )
+
+    # Initialize crawler with the deep module as the root file
+    crawler = ImportCrawler(str(deep_module))
+
+    # Try to find each module from deep inside the package
+    search_dir = str(deep_pkg)
+    
+    assert crawler.find_module("sub_utils", search_dir) == str(sub_module)
+    assert crawler.find_module("mid_utils", search_dir) == str(mid_module)
+    assert crawler.find_module("root_utils", search_dir) == str(root_module)

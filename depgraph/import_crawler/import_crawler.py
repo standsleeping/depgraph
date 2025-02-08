@@ -7,6 +7,7 @@ from typing import Optional
 from .module_info import ModuleInfo
 from ..logger import setup_logger
 from .package_finder import find_outermost_package_root
+from .package_searcher import find_module_in_package_hierarchy
 
 
 class ImportCrawler:
@@ -104,9 +105,12 @@ class ImportCrawler:
             original_root = self.project_root
             self.project_root = outer_root
             try:
-                local_module = self.find_local_module(module_name, outer_root)
-                if local_module:
-                    return local_module
+                # Search through the package hierarchy
+                module_path = find_module_in_package_hierarchy(
+                    module_name, search_dir, outer_root, self.logger
+                )
+                if module_path:
+                    return module_path
             finally:
                 # Restore original project root
                 self.project_root = original_root
