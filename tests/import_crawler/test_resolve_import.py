@@ -128,3 +128,37 @@ def test_resolve_import_circular_reference(crawler, tmp_path):
 
         # Should only call build_graph once for module1
         mock_build.assert_called_once_with(str(module1))
+
+
+def test_categorize_unresolved_imports(crawler, tmp_path):
+    """Correctly categorizes different types of unresolved imports."""
+    current_file = tmp_path / "test.py"
+    current_file.touch()
+
+    # System import
+    crawler.resolve_import("sys", str(current_file), str(tmp_path))
+    assert "sys" in crawler.unresolved_system_imports
+
+    # Default to local import
+    crawler.resolve_import("local_module", str(current_file), str(tmp_path))
+    assert "local_module" in crawler.unresolved_local_imports
+
+
+def test_categorize_dotted_imports(crawler, tmp_path):
+    """Correctly categorizes dotted imports as local."""
+    current_file = tmp_path / "test.py"
+    current_file.touch()
+
+    # Test dotted imports (should be local)
+    crawler.resolve_import("package.module", str(current_file), str(tmp_path))
+    assert "package.module" in crawler.unresolved_local_imports
+
+
+def test_categorize_private_imports(crawler, tmp_path):
+    """Correctly categorizes private imports as local."""
+    current_file = tmp_path / "test.py"
+    current_file.touch()
+
+    # Test private module import (should be local)
+    crawler.resolve_import("_private_module", str(current_file), str(tmp_path))
+    assert "_private_module" in crawler.unresolved_local_imports

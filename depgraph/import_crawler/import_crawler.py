@@ -9,6 +9,8 @@ from ..logger import setup_logger
 from .package_finder import find_outermost_package_root
 from .package_searcher import find_module_in_package_hierarchy
 from .dependency_graph import DependencyGraph
+from .site_packages import find_project_site_packages
+from .import_categorizer import ImportCategorizer
 
 
 class ImportCrawler:
@@ -17,14 +19,40 @@ class ImportCrawler:
         self.project_root = os.path.dirname(self.root_file)
         self.visited: set[str] = set()
         self.graph = DependencyGraph()
-        self.unresolved_imports: set[str] = set()
-        paths = sysconfig.get_paths().values()
-        self.stdlib_paths = set([os.path.abspath(p) for p in paths])
 
         if logger is None:
             logger = setup_logger()
         self.logger = logger
         self.logger.debug(f"Initialized with root: {os.path.basename(self.root_file)}")
+
+        # Get standard library paths
+        paths = sysconfig.get_paths()
+        self.stdlib_paths = set([os.path.abspath(p) for p in paths.values()])
+
+        # Get site-packages paths for the project being analyzed
+        self.site_packages_paths = find_project_site_packages(
+            self.project_root,
+            self.logger,
+        )
+
+        # Initialize the import categorizer
+        self.import_categorizer = ImportCategorizer(
+            self.stdlib_paths,
+            self.site_packages_paths,
+            self.logger,
+        )
+
+    @property
+    def unresolved_local_imports(self) -> set[str]:
+        return self.import_categorizer.local_imports
+
+    @property
+    def unresolved_system_imports(self) -> set[str]:
+        return self.import_categorizer.system_imports
+
+    @property
+    def unresolved_third_party_imports(self) -> set[str]:
+        return self.import_categorizer.third_party_imports
 
     def build_graph(self, file_path: str) -> None:
         """Recursively builds the import graph."""
@@ -80,8 +108,12 @@ class ImportCrawler:
             self.graph.add_dependency(current, module)
             self.build_graph(module_path)
         else:
-            self.unresolved_imports.add(module_name)
+            self.categorize_unresolved_import(module_name)
             self.logger.debug(f"Could not resolve {module_name}")
+
+    def categorize_unresolved_import(self, module_name: str) -> None:
+        """Categorize an unresolved import using the ImportCategorizer."""
+        self.import_categorizer.categorize_import(module_name)
 
     def find_module(self, module_name: str, search_dir: str) -> Optional[str]:
         """
@@ -133,9 +165,5 @@ class ImportCrawler:
             print(f"{source} -> [{printed_set}]")
 
     def print_unresolved_imports(self) -> None:
-        """Prints the set of unresolved imports."""
-        if self.unresolved_imports:
-            print("-" * 80)
-            print("Unresolved imports:")
-            for import_name in self.unresolved_imports:
-                print(f"  {import_name}")
+        """Prints the sets of unresolved imports by category."""
+        self.import_categorizer.print_unresolved_imports()
