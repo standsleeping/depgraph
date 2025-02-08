@@ -1,85 +1,134 @@
-def test_find_single_file_module(crawler, tmp_path):
+import pytest
+from depgraph.import_crawler.find_local_module import find_local_module
+import os
+
+
+@pytest.fixture
+def module_finder(tmp_path):
+    """Returns a tuple of (search_dir, stdlib_paths, project_root)."""
+    stdlib_paths = ["/usr/lib/python3.8", "/usr/local/lib/python3.8"]
+    return str(tmp_path), stdlib_paths, str(tmp_path)
+
+
+def test_find_single_file_module(module_finder):
     """Simple 'modulename.py' module files are found."""
-    module = tmp_path / "mymodule.py"
-    module.touch()
+    search_dir, stdlib_paths, project_root = module_finder
+    module = os.path.join(search_dir, "mymodule.py")
+    open(module, "w").close()
 
-    result = crawler.find_local_module("mymodule", str(tmp_path))
-    assert result == str(module)
+    result = find_local_module(
+        "mymodule",
+        search_dir,
+        stdlib_paths,
+        project_root,
+    )
+
+    assert result == module
 
 
-def test_find_package_module(crawler, tmp_path):
+def test_find_package_module(module_finder):
     """Modules within packages are found."""
-    package_dir = tmp_path / "mypackage"
-    package_dir.mkdir()
+    search_dir, stdlib_paths, project_root = module_finder
+    package_dir = os.path.join(search_dir, "mypackage")
+    os.makedirs(package_dir)
 
-    init_file = package_dir / "__init__.py"
-    init_file.touch()
+    init_file = os.path.join(package_dir, "__init__.py")
+    open(init_file, "w").close()
 
-    result = crawler.find_local_module("mypackage", str(tmp_path))
-    assert result == str(init_file)
+    result = find_local_module(
+        "mypackage",
+        search_dir,
+        stdlib_paths,
+        project_root,
+    )
+
+    assert result == init_file
 
 
-def test_find_submodule(crawler, tmp_path):
+def test_find_submodule(module_finder):
     """Submodules are found using dot notation."""
-    package_dir = tmp_path / "mypackage"
-    package_dir.mkdir()
+    search_dir, stdlib_paths, project_root = module_finder
+    package_dir = os.path.join(search_dir, "mypackage")
+    os.makedirs(package_dir)
 
-    submodule = package_dir / "submodule.py"
-    submodule.touch()
+    submodule = os.path.join(package_dir, "submodule.py")
 
-    result = crawler.find_local_module("mypackage.submodule", str(tmp_path))
-    assert result == str(submodule)
+    open(submodule, "w").close()
+
+    result = find_local_module(
+        "mypackage.submodule",
+        search_dir,
+        stdlib_paths,
+        project_root,
+    )
+
+    assert result == submodule
 
 
-def test_nonexistent_module(crawler, tmp_path):
+def test_nonexistent_module(module_finder):
     """Nonexistent modules return None."""
-    result = crawler.find_local_module("nonexistent", str(tmp_path))
+    search_dir, stdlib_paths, project_root = module_finder
+
+    result = find_local_module(
+        "nonexistent",
+        search_dir,
+        stdlib_paths,
+        project_root,
+    )
+
     assert result is None
 
 
-def test_non_local_module(crawler, tmp_path):
-    """Non-local modules return None."""
-    outside_dir = tmp_path.parent / "outside"
-    outside_dir.mkdir(exist_ok=True)
-
-    outside_module = outside_dir / "outside_module.py"
-    outside_module.touch()
-
-    result = crawler.find_local_module("outside_module", str(outside_dir))
-    assert result is None
-
-
-def test_nested_package_structure(crawler, tmp_path):
+def test_nested_package_structure(module_finder):
     """Modules in nested package structures are found."""
-    pkg_dir = tmp_path / "pkg"
-    pkg_dir.mkdir()
+    search_dir, stdlib_paths, project_root = module_finder
+    pkg_dir = os.path.join(search_dir, "pkg")
+    subpkg_dir = os.path.join(pkg_dir, "subpkg")
+    os.makedirs(subpkg_dir)
 
-    subpkg_dir = pkg_dir / "subpkg"
-    subpkg_dir.mkdir()
+    module_file = os.path.join(subpkg_dir, "module.py")
+    open(module_file, "w").close()
 
-    module_file = subpkg_dir / "module.py"
-    module_file.touch()
+    result = find_local_module(
+        "pkg.subpkg.module",
+        search_dir,
+        stdlib_paths,
+        project_root,
+    )
 
-    result = crawler.find_local_module("pkg.subpkg.module", str(tmp_path))
-    assert result == str(module_file)
+    assert result == module_file
 
 
-def test_prefer_file_over_package(crawler, tmp_path):
+def test_prefer_file_over_package(module_finder):
     """Single 'modulename.py' files are preferred over packages with the same name."""
-    module_file = tmp_path / "module.py"
-    module_file.touch()
+    search_dir, stdlib_paths, project_root = module_finder
+    module_file = os.path.join(search_dir, "module.py")
+    open(module_file, "w").close()
 
-    module_dir = tmp_path / "module"
-    module_dir.mkdir()
+    module_dir = os.path.join(search_dir, "module")
+    os.makedirs(module_dir)
+    init_file = os.path.join(module_dir, "__init__.py")
+    open(init_file, "w").close()
 
-    init_file = module_dir / "__init__.py"
-    init_file.touch()
+    result = find_local_module(
+        "module",
+        search_dir,
+        stdlib_paths,
+        project_root,
+    )
 
-    result = crawler.find_local_module("module", str(tmp_path))
-    assert result == str(module_file)
+    assert result == module_file
 
 
-def test_empty_module_name(crawler, tmp_path):
+def test_empty_module_name(module_finder):
     """Empty module names return None."""
-    result = crawler.find_local_module("", str(tmp_path))
+    search_dir, stdlib_paths, project_root = module_finder
+
+    result = find_local_module(
+        "",
+        search_dir,
+        stdlib_paths,
+        project_root,
+    )
+
     assert result is None

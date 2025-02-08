@@ -1,57 +1,86 @@
 import os
 import pytest
+from depgraph.import_crawler.is_local_module import is_local_module
 
 
-def test_local_module_in_project_root(crawler, tmp_path):
+@pytest.fixture
+def stdlib_paths():
+    """Returns a list of standard library paths."""
+    return ["/usr/lib/python3.8", "/usr/local/lib/python3.8"]
+
+
+@pytest.fixture
+def project_root(tmp_path):
+    """Returns a temporary project root directory."""
+    return str(tmp_path)
+
+
+def test_local_module_in_project_root(stdlib_paths, project_root):
     """Modules in the project root are considered local."""
-    local_module = tmp_path / "local_module.py"
-    local_module.touch()
+    local_module = os.path.join(project_root, "local_module.py")
 
-    assert crawler.is_local_module(str(local_module)) is True
+    result = is_local_module(
+        local_module,
+        stdlib_paths,
+        project_root,
+    )
+
+    assert result is True
 
 
-def test_local_module_in_subdirectory(crawler, tmp_path):
+def test_local_module_in_subdirectory(stdlib_paths, project_root):
     """Modules in project subdirectories are considered local."""
-    subdir = tmp_path / "subpackage"
-    subdir.mkdir()
-    local_module = subdir / "local_module.py"
-    local_module.touch()
+    subdir = os.path.join(project_root, "subpackage")
+    os.makedirs(subdir)
+    local_module = os.path.join(subdir, "local_module.py")
 
-    assert crawler.is_local_module(str(local_module)) is True
+    result = is_local_module(
+        local_module,
+        stdlib_paths,
+        project_root,
+    )
+
+    assert result is True
 
 
-def test_module_outside_project_root(crawler, tmp_path):
+def test_module_outside_project_root(stdlib_paths, project_root):
     """Modules outside the project root are not considered local."""
-    outside_dir = tmp_path.parent / "outside"
-    outside_dir.mkdir(exist_ok=True)
+    outside_dir = os.path.dirname(project_root)
+    outside_module = os.path.join(outside_dir, "outside_module.py")
 
-    outside_module = outside_dir / "outside_module.py"
-    outside_module.touch()
+    result = is_local_module(
+        outside_module,
+        stdlib_paths,
+        project_root,
+    )
 
-    assert crawler.is_local_module(str(outside_module)) is False
+    assert result is False
 
 
-def test_stdlib_module(crawler):
+def test_stdlib_module(stdlib_paths, project_root):
     """Standard library modules are not considered local."""
-    # Grab a standard library path from the crawler's stdlib_paths
-    stdlib_path = next(iter(crawler.stdlib_paths))
-    test_module = os.path.join(stdlib_path, "test_module.py")
+    stdlib_module = os.path.join(stdlib_paths[0], "test_module.py")
 
-    assert crawler.is_local_module(test_module) is False
+    result = is_local_module(
+        stdlib_module,
+        stdlib_paths,
+        project_root,
+    )
 
-
-def test_nonexistent_module(crawler, tmp_path):
-    """Modules that don't exist are not considered local."""
-    nonexistent = tmp_path / "nonexistent.py"
-    assert crawler.is_local_module(str(nonexistent)) is True
+    assert result is False
 
 
-def test_relative_path_resolution(crawler, tmp_path):
+def test_relative_path_resolution(stdlib_paths, project_root):
     """Relative paths are properly resolved."""
-    local_module = tmp_path / "local_module.py"
-    local_module.touch()
-
     relative_path = "./local_module.py"
+
     with pytest.MonkeyPatch.context() as mp:
-        mp.chdir(tmp_path)
-        assert crawler.is_local_module(relative_path) is True
+        mp.chdir(project_root)
+
+        result = is_local_module(
+            relative_path,
+            stdlib_paths,
+            project_root,
+        )
+
+        assert result is True

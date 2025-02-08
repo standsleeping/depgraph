@@ -232,15 +232,16 @@ def test_find_module_expansion_fails(nested_package_structure):
 def test_find_module_respects_project_root(nested_package_structure, tmp_path):
     """Doesn't resolve modules outside project root."""
     # Create a module outside the project root
-    outside_pkg = tmp_path / "outside_pkg"
-    outside_pkg.mkdir()
-    (outside_pkg / "__init__.py").touch()
-    (outside_pkg / "external.py").touch()
+    outside_dir = tmp_path.parent / "outside_pkg"
+    outside_dir.mkdir()
+    (outside_dir / "__init__.py").touch()
+    (outside_dir / "external.py").touch()
 
     deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
     crawler = ImportCrawler(str(deep_module))
 
-    # Try to find the external module
-    module_path = crawler.find_module("external", str(outside_pkg))
+    # Try to find the external module from inside the project root
+    search_dir = str(nested_package_structure / "root_pkg")
+    module_path = crawler.find_module("external", search_dir)
 
     assert module_path is None

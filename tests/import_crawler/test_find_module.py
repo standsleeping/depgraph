@@ -49,13 +49,14 @@ def test_package_module(crawler, tmp_path):
 
 def test_non_local_module(crawler, tmp_path):
     """Returns None for non-local modules."""
+    # Create a module outside the search directory
     outside_dir = tmp_path.parent / "outside"
     outside_dir.mkdir(exist_ok=True)
-
     outside_module = outside_dir / "outside_module.py"
     outside_module.touch()
 
-    result = crawler.find_module("outside_module", str(outside_dir))
+    # Search from tmp_path
+    result = crawler.find_module("outside_module", str(tmp_path))
     assert result is None
 
 

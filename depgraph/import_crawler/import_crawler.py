@@ -83,37 +83,21 @@ class ImportCrawler:
     def find_module(self, module_name: str, search_dir: str) -> Optional[str]:
         """
         Attempts to find the module file given its name by:
-        1. Checking relative to the current directory
-        2. Searching through sys.path
-        3. If above fails, try expanding search to outer package roots
+        1. Searching through the package hierarchy from current directory
+        2. If not found, try finding through sys.path
         """
-        # First try relative to current directory
-        local_module = self.find_local_module(module_name, search_dir)
-        if local_module:
-            return local_module
+        # First try searching through package hierarchy
+        outer_root = find_outermost_package_root(search_dir, self.logger)
+        module_path = find_module_in_package_hierarchy(
+            module_name, search_dir, outer_root, self.logger
+        )
+        if module_path:
+            return module_path
 
         # If not found locally, try finding through sys.path
         module_path = self.find_module_in_syspath(module_name)
         if module_path:
             return module_path
-
-        # If still not found, try expanding search to outer package roots
-        outer_root = find_outermost_package_root(search_dir, self.logger)
-        if outer_root != search_dir:  # Only try if we found a different root
-            self.logger.debug(f"Attempting wider search from outer root: {outer_root}")
-            # Temporarily expand project root to include outer package
-            original_root = self.project_root
-            self.project_root = outer_root
-            try:
-                # Search through the package hierarchy
-                module_path = find_module_in_package_hierarchy(
-                    module_name, search_dir, outer_root, self.logger
-                )
-                if module_path:
-                    return module_path
-            finally:
-                # Restore original project root
-                self.project_root = original_root
 
         return None
 
@@ -126,45 +110,18 @@ class ImportCrawler:
             spec = find_spec(module_name)
             if spec and spec.origin:
                 # Filter out compiled modules and non-local modules
-                if spec.origin.endswith(".py") and self.is_local_module(spec.origin):
-                    return spec.origin
+                if spec.origin.endswith(".py"):
+                    module_path = os.path.abspath(spec.origin)
+                    # Check if module is in standard library
+                    for stdlib_path in self.stdlib_paths:
+                        if module_path.startswith(stdlib_path):
+                            return None
+                    # Check if module is within project directory
+                    if module_path.startswith(self.project_root):
+                        return module_path
         except (ImportError, AttributeError):
             pass
         return None
-
-    def find_local_module(self, module_name: str, search_dir: str) -> Optional[str]:
-        """
-        Attempts to find a module relative to the current directory.
-        Returns the path if found and is a local module, None otherwise.
-        """
-        parts = module_name.split(".")
-        potential_paths = [
-            os.path.join(search_dir, *parts) + ".py",
-            os.path.join(search_dir, *parts, "__init__.py"),
-        ]
-        for path in potential_paths:
-            if os.path.exists(path) and self.is_local_module(path):
-                return path
-        return None
-
-    def is_local_module(self, module_path: str) -> bool:
-        """
-        Determines if a module is local to the project by checking:
-        1. Not in standard library paths
-        2. Within project directory
-        """
-        module_path = os.path.abspath(module_path)
-
-        # Check if module is in standard library
-        for stdlib_path in self.stdlib_paths:
-            if module_path.startswith(stdlib_path):
-                return False
-
-        # Check if module is within project directory
-        if not module_path.startswith(self.project_root):
-            return False
-
-        return True
 
     def print_graph(self) -> None:
         """Prints the graph in a human-readable format."""
