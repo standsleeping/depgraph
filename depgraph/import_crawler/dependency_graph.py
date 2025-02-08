@@ -17,6 +17,18 @@ class DependencyGraph:
         # Ensure target exists in graph even if it has no dependencies
         self.dependencies.setdefault(target, set())
 
+    def __getitem__(self, key: ModuleInfo) -> Set[ModuleInfo]:
+        """Allow dictionary-style access to dependencies."""
+        return self.dependencies[key]
+
+    def __setitem__(self, key: ModuleInfo, value: Set[ModuleInfo]) -> None:
+        """Allow dictionary-style assignment of dependencies."""
+        self.dependencies[key] = value
+
+    def __contains__(self, key: str) -> bool:
+        """Allow 'in' operator to check if a module path is in the graph."""
+        return any(str(k) == key for k in self.dependencies)
+
     def to_json(self) -> Dict[str, Dict[str, list[str]]]:
         """
         Convert the dependency graph to a JSON-serializable dictionary.
