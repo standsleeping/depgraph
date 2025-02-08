@@ -8,6 +8,7 @@ from .module_info import ModuleInfo
 from ..logger import setup_logger
 from .package_finder import find_outermost_package_root
 from .package_searcher import find_module_in_package_hierarchy
+from .dependency_graph import DependencyGraph
 
 
 class ImportCrawler:
@@ -15,7 +16,7 @@ class ImportCrawler:
         self.root_file = os.path.abspath(root_file)
         self.project_root = os.path.dirname(self.root_file)
         self.visited: set[str] = set()
-        self.graph: dict[ModuleInfo, set[ModuleInfo]] = {}
+        self.graph = DependencyGraph()
         paths = sysconfig.get_paths().values()
         self.stdlib_paths = set([os.path.abspath(p) for p in paths])
 
@@ -75,7 +76,7 @@ class ImportCrawler:
         if module_path:
             current = ModuleInfo(current_file)
             module = ModuleInfo(module_path)
-            self.graph.setdefault(current, set()).add(module)
+            self.graph.add_dependency(current, module)
             self.build_graph(module_path)
         else:
             self.logger.warning(f"Could not resolve {module_name}")
@@ -125,6 +126,6 @@ class ImportCrawler:
 
     def print_graph(self) -> None:
         """Prints the graph in a human-readable format."""
-        for key, set in self.graph.items():
-            printed_set = ", ".join([str(module) for module in set])
-            print(f"{key} -> [{printed_set}]")
+        for source, targets in self.graph.dependencies.items():
+            printed_set = ", ".join([str(module) for module in targets])
+            print(f"{source} -> [{printed_set}]")

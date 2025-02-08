@@ -1,9 +1,11 @@
 import os
+import json
 
 from ..logger import setup_logger
 from .import_crawler import ImportCrawler
 from .tree_printer import TreePrinter
 from .module_info import ModuleInfo
+from .dependency_graph import DependencyGraph
 from .cli import parse_args
 
 
@@ -25,9 +27,14 @@ def main() -> None:
     crawler.print_graph()
     print("-" * 80)
 
-    printer = TreePrinter(crawler.graph)
+    graph: DependencyGraph = crawler.graph
+    printer = TreePrinter(graph.dependencies)
     root = ModuleInfo(entry_file)
     print(printer.tree(root))
+
+    print("\nDependency Graph (JSON):")
+    json_graph = graph.to_json()
+    print(json.dumps(json_graph, indent=2))
 
     logger.info("Analysis complete!")
 
