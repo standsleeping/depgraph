@@ -17,6 +17,7 @@ class ImportCrawler:
         self.project_root = os.path.dirname(self.root_file)
         self.visited: set[str] = set()
         self.graph = DependencyGraph()
+        self.unresolved_imports: set[str] = set()
         paths = sysconfig.get_paths().values()
         self.stdlib_paths = set([os.path.abspath(p) for p in paths])
 
@@ -32,12 +33,12 @@ class ImportCrawler:
             self.logger.debug(f"Skipping file: {os.path.basename(file_path)}")
             return
 
-        self.logger.info(f"Building graph for: {os.path.basename(file_path)}")
+        self.logger.info(f"Building graph for {os.path.basename(file_path)}")
         self.visited.add(file_path)
 
         tree = self.parse_file(file_path)
         if tree is None:
-            self.logger.warning(f"Failed to parse file: {os.path.basename(file_path)}")
+            self.logger.warning(f"Failed to parse {os.path.basename(file_path)}")
             return
 
         module_dir = os.path.dirname(file_path)
@@ -79,7 +80,8 @@ class ImportCrawler:
             self.graph.add_dependency(current, module)
             self.build_graph(module_path)
         else:
-            self.logger.warning(f"Could not resolve {module_name}")
+            self.unresolved_imports.add(module_name)
+            self.logger.debug(f"Could not resolve {module_name}")
 
     def find_module(self, module_name: str, search_dir: str) -> Optional[str]:
         """
@@ -129,3 +131,11 @@ class ImportCrawler:
         for source, targets in self.graph.dependencies.items():
             printed_set = ", ".join([str(module) for module in targets])
             print(f"{source} -> [{printed_set}]")
+
+    def print_unresolved_imports(self) -> None:
+        """Prints the set of unresolved imports."""
+        if self.unresolved_imports:
+            print("-" * 80)
+            print("Unresolved imports:")
+            for import_name in self.unresolved_imports:
+                print(f"  {import_name}")

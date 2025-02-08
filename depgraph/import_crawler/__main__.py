@@ -26,6 +26,9 @@ def main() -> None:
 
     graph: DependencyGraph = crawler.graph
 
+    # Print unresolved imports
+    crawler.print_unresolved_imports()
+
     # Simple format (original)
     if "simple" in display_options:
         print("-" * 80)
