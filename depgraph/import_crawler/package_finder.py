@@ -55,5 +55,5 @@ def find_outermost_package_root(
             # Stop if we can't access the directory
             break
 
-    logger.info(f"Found outermost package root: {last_valid_dir}")
+    logger.debug(f"Found outermost root: {last_valid_dir}")
     return last_valid_dir

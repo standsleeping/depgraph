@@ -70,3 +70,14 @@ def test_tree_with_root_not_in_graph(module_a):
     expected = "module_a.py\n"
     result = printer.tree(module_a)
     assert result == expected
+
+
+def test_tree_with_circular_dependency(module_a, module_b):
+    """Tree with circular dependencies."""
+    # Create a circular dependency: a -> b -> a
+    graph = {module_a: {module_b}, module_b: {module_a}}
+    printer = TreePrinter(graph)
+
+    expected = "module_a.py\n    module_b.py\n        module_a.py (circular)\n"
+    result = printer.tree(module_a)
+    assert result == expected
