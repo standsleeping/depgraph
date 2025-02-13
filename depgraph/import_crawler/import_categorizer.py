@@ -60,7 +60,7 @@ class ImportCategorizer:
             print("-" * 80)
 
             if self.local_imports:
-                print("Unresolved local imports:")
+                print("\nUnresolved local imports:")
                 for import_name in sorted(self.local_imports):
                     print(f"  {import_name}")
 
@@ -73,3 +73,4 @@ class ImportCategorizer:
                 print("\nThird-party imports (detected, not followed):")
                 for import_name in sorted(self.third_party_imports):
                     print(f"  {import_name}")
+            print()
