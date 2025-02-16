@@ -20,11 +20,13 @@ python -m depgraph ./depgraph/analyze_file.py
 - `--depth`: Depth of the analysis (default: 4)
 - `--log-level`: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) (default: INFO)
 - `--log-file`: Path to log file (if not specified, logs to stderr only)
+- `--scope`: Analyze dependencies for a specific scope (e.g., a function name or "<module>" for module level) (default: "<module>")
 
 Example with all options:
 ```bash
 python -m depgraph ./depgraph/analyze_file.py \
   --depth 6 \
   --log-level DEBUG \
-  --log-file ./depgraph.log
+  --log-file ./depgraph.log \
+  --scope "my_function"
 ```
