@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from typing import Dict, Set
+from typing import Dict, Set, List
 from .module_info import ModuleInfo
 
 
 @dataclass
 class DependencyGraph:
     """Represents a dependency graph of Python modules."""
+
     dependencies: Dict[ModuleInfo, Set[ModuleInfo]]
 
     def __init__(self) -> None:
@@ -29,10 +30,63 @@ class DependencyGraph:
         """Allow 'in' operator to check if a module path is in the graph."""
         return any(str(k) == key for k in self.dependencies)
 
+    def get_imports(self, file_path: str) -> List[str]:
+        """Get a list of all files imported by the given file."""
+        # Find the ModuleInfo matching this file path
+        for source, targets in self.dependencies.items():
+            if str(source.full_path) == file_path:
+                return [str(target.full_path) for target in targets]
+        return []
+
+    def get_all_files(self) -> List[str]:
+        """Get a list of all files in the dependency graph."""
+        all_files = set()
+        for source in self.dependencies:
+            all_files.add(str(source.full_path))
+            for target in self.dependencies[source]:
+                all_files.add(str(target.full_path))
+        return list(all_files)
+
+    def imports(self, source_file: str, target_file: str) -> bool:
+        """Check if source_file directly imports target_file."""
+        for source, targets in self.dependencies.items():
+            if str(source.full_path) == source_file:
+                for target in targets:
+                    if str(target.full_path) == target_file:
+                        return True
+        return False
+
+    def imported_by(self, target_file: str, source_file: str) -> bool:
+        """Check if target_file is directly imported by source_file."""
+        return self.imports(source_file, target_file)
+
+    def has_transitive_dependency(self, source_file: str, target_file: str) -> bool:
+        """Check if source_file directly or indirectly imports target_file."""
+        visited = set()
+
+        def dfs(current: str) -> bool:
+            if current == target_file:
+                return True
+
+            if current in visited:
+                return False
+
+            visited.add(current)
+
+            for source, targets in self.dependencies.items():
+                if str(source.full_path) == current:
+                    for target in targets:
+                        target_path = str(target.full_path)
+                        if dfs(target_path):
+                            return True
+            return False
+
+        return dfs(source_file)
+
     def to_json(self) -> Dict[str, Dict[str, list[str]]]:
         """
         Convert the dependency graph to a JSON-serializable dictionary.
-        
+
         Returns:
             A dictionary with file paths as keys and their import information as values.
             Each value contains 'imports' and 'imported_by' lists.
@@ -59,4 +113,4 @@ class DependencyGraph:
         for node in json_graph.values():
             node["imported_by"].sort()
 
-        return json_graph 
+        return json_graph
