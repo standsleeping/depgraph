@@ -6,7 +6,7 @@ from depgraph.data.file_analysis import FileAnalysis
 from depgraph.data.scope_info import ScopeInfo
 from depgraph.data.scope_name import ScopeName
 from depgraph.processors.process_scope import process_scope
-
+from depgraph.import_crawler.crawl import crawl
 
 def run_analysis() -> None:
     (
@@ -15,6 +15,9 @@ def run_analysis() -> None:
         log_level,
         log_file,
         scope_filter,
+        display_options,
+        output_file,
+        output_format,
     ) = parse_args()
 
     logger = setup_logger(level=log_level, log_file=log_file)
@@ -23,10 +26,16 @@ def run_analysis() -> None:
     logger.debug(f"  depth: {depth}")
     logger.debug(f"  log_level: {log_level}")
     logger.debug(f"  log_file: {log_file}")
+
     if scope_filter:
         logger.debug(f"  scope_filter: {scope_filter}")
 
+    if output_file:
+        logger.debug(f"  output_file: {output_file}")
+        logger.debug(f"  output_format: {output_format}")
+
     logger.info(f"Analyzing file '{file_path}'")
+
     file_analysis: FileAnalysis = process_file(file_path=file_path, depth=depth)
 
     module_scope_info: ScopeInfo
@@ -37,10 +46,20 @@ def run_analysis() -> None:
 
     assignments = process_scope(module_scope_info)
 
-    logger.info("Analysis complete!")
+    logger.info("File analysis complete!")
 
     print_analysis(
         analysis=file_analysis,
         scope_filter=scope_filter,
         assignments=assignments,
     )
+
+    crawl(
+        file_path=file_path,
+        display_options=display_options,
+        output_file=output_file,
+        output_format=output_format,
+        logger=logger,
+    )
+
+    logger.info("Crawler analysis complete!")

@@ -44,6 +44,7 @@ def print_analysis(
         for child in sorted(children, key=lambda x: str(x)):
             print_scope(child, scopes, indent + 1)
 
+    print("-" * 80)
     print("\nScope Hierarchy:")
     if scope_filter:
         if scope_filter not in [str(name) for name in analysis.scopes.keys()]:
@@ -57,3 +58,4 @@ def print_analysis(
         print("\nAssignments:")
         for assignment in sorted(assignments, key=lambda x: x.name):
             print(f"  • {format_assignment(assignment)}")
+    print("-" * 80)

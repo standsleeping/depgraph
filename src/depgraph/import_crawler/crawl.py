@@ -1,41 +1,34 @@
 import os
 import json
-
-from depgraph.logger.setup_logger import setup_logger
+from logging import Logger
 from .import_crawler import ImportCrawler
 from .tree_printer import TreePrinter
 from .module_info import ModuleInfo
 from .dependency_graph import DependencyGraph
-from .cli import parse_args
+from typing import Optional, Set
 
 
-def main() -> None:
-    (
-        entry_file,
-        log_level,
-        log_file,
-        display_options,
-        output_file,
-        output_format,
-    ) = parse_args()
+def crawl(
+    file_path: str,
+    display_options: Set[str],
+    output_file: Optional[str],
+    output_format: Optional[str],
+    logger: Logger,
+) -> None:
+    """Crawl the import graph for the given entry file.
 
+    Args:
+        file_path: The file to crawl
+        display_options: The display options to use
+        output_file: The output file to use
+        output_format: The output format to use
+        logger: The logger to use
+    """
     final_output_format = output_format if output_format is not None else "json"
 
-    logger = setup_logger(level=log_level, log_file=log_file)
-
-    logger.debug("Starting import analysis with parameters:")
-    logger.debug(f"  entry_file: {entry_file}")
-    logger.debug(f"  log_level: {log_level}")
-    logger.debug(f"  log_file: {log_file}")
-    logger.debug(f"  display_options: {display_options}")
-
-    if output_file:
-        logger.debug(f"  output_file: {output_file}")
-        logger.debug(f"  output_format: {output_format}")
-
-    logger.info(f"Analyzing imports for {os.path.basename(entry_file)}")
-    crawler = ImportCrawler(entry_file, logger)
-    crawler.build_graph(entry_file)
+    logger.info(f"Analyzing imports for {os.path.basename(file_path)}")
+    crawler = ImportCrawler(file_path, logger)
+    crawler.build_graph(file_path)
 
     graph: DependencyGraph = crawler.graph
 
@@ -52,7 +45,7 @@ def main() -> None:
         if "simple" in display_options:
             print()  # Add spacing between formats
         printer = TreePrinter(graph.dependencies)
-        root = ModuleInfo(entry_file)
+        root = ModuleInfo(file_path)
         print("Dependency Tree:")
         print(printer.tree(root))
 
@@ -85,5 +78,3 @@ def write_output(graph: DependencyGraph, output_file: str, output_format: str) -
             json.dump(json_data, f, indent=2)
 
 
-if __name__ == "__main__":
-    main()

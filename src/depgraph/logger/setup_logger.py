@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from typing import Optional
+from logging import Logger
 
 DEFAULT_FORMAT = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
 
@@ -28,7 +29,7 @@ def setup_logger(
     Returns:
         Configured logger instance
     """
-    logger = logging.getLogger(name)
+    logger: Logger = logging.getLogger(name)
 
     # Clear any existing handlers
     logger.handlers.clear()
