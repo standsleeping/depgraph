@@ -1,14 +1,19 @@
 from typing import Dict, Optional, List
-from .scope_data import ScopeInfo, FileAnalysis, ScopeName
-from .assignment_analyzer import AssignmentData
+from depgraph.data.scope_info import ScopeInfo
+from depgraph.data.file_analysis import FileAnalysis
+from depgraph.data.scope_name import ScopeName
+from depgraph.data.assignment_data import AssignmentData
 
 
 def print_analysis(
     *,
     analysis: FileAnalysis,
     scope_filter: Optional[str] = None,
-    assignments: List[AssignmentData],
+    assignments: Optional[List[AssignmentData]] = None,
 ) -> None:
+    if assignments is None:
+        assignments = []
+
     """Print the analysis in a hierarchical tree format.
 
     Args:

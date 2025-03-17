@@ -1,6 +1,7 @@
 import ast
 import pytest
-from depgraph.scope_data import ScopeInfo, ScopeName
+from depgraph.data.scope_info import ScopeInfo
+from depgraph.data.scope_name import ScopeName
 
 
 def test_valid_module_scope():

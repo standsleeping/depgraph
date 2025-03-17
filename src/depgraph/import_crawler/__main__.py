@@ -1,7 +1,7 @@
 import os
 import json
 
-from ..logger import setup_logger
+from depgraph.logger.setup_logger import setup_logger
 from .import_crawler import ImportCrawler
 from .tree_printer import TreePrinter
 from .module_info import ModuleInfo

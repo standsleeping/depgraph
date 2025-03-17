@@ -1,5 +1,5 @@
 import ast
-from depgraph.assignment_analyzer import AssignmentVisitor
+from depgraph.visitors.assignment_visitor import AssignmentVisitor
 from tests.conftest import create_test_file
 
 

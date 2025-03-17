@@ -1,7 +1,7 @@
 import os
-from typing import Optional, List
 import logging
-from ..logger import setup_logger
+from typing import Optional, List
+from depgraph.logger.setup_logger import setup_logger
 
 
 def get_ancestor_paths(start_dir: str, outer_root: str) -> List[str]:

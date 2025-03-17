@@ -1,6 +1,9 @@
 import ast
 from typing import Dict, Optional
-from depgraph.scope_data import ScopeInfo, ScopeType, ScopeNode, ScopeName
+from depgraph.data.scope_info import ScopeInfo
+from depgraph.data.scope_name import ScopeName
+from depgraph.data.scope_node import ScopeNode
+from depgraph.data.scope_type import ScopeType
 
 
 class ScopeVisitor(ast.NodeVisitor):
@@ -57,10 +60,7 @@ class ScopeVisitor(ast.NodeVisitor):
         """
         scope_name = self.make_scope_name(name)
         scope_info = ScopeInfo(
-            name=scope_name,
-            node=node,
-            type=scope_type,
-            parent=self.current_scope
+            name=scope_name, node=node, type=scope_type, parent=self.current_scope
         )
 
         self.scopes[scope_name] = scope_info

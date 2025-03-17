@@ -1,7 +1,7 @@
 import ast
-from depgraph.parse_file import parse_file
-from depgraph.scope_visitor import ScopeVisitor
-from depgraph.scope_data import FileAnalysis
+from depgraph.tools import parse_file
+from depgraph.visitors import ScopeVisitor
+from depgraph.data.file_analysis import FileAnalysis
 
 
 def analyze_file(file_path: str, depth: int) -> FileAnalysis:

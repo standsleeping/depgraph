@@ -63,5 +63,3 @@ def setup_logger(
     return logger
 
 
-# Create the default logger instance with INFO level
-logger = setup_logger()

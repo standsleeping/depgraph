@@ -1,7 +1,7 @@
 import ast
 import pytest
 
-from depgraph.parse_file import parse_file
+from depgraph.tools import parse_file
 
 
 def test_parses_file(tmp_path):

@@ -1,6 +1,6 @@
 import os
 import logging
-from ..logger import setup_logger
+from depgraph.logger.setup_logger import setup_logger
 
 
 def find_outermost_package_root(

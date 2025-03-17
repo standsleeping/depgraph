@@ -1,7 +1,7 @@
 import os
 import pytest
 from depgraph.import_crawler.site_packages import find_project_site_packages
-from depgraph.logger import setup_logger
+from depgraph.logger.setup_logger import setup_logger
 
 
 @pytest.fixture

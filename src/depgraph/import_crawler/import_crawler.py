@@ -4,9 +4,9 @@ import sys
 import logging
 import sysconfig
 from importlib.util import find_spec
-from typing import Optional, Dict, Set, List
+from typing import Optional
 from .module_info import ModuleInfo
-from ..logger import setup_logger
+from depgraph.logger.setup_logger import setup_logger
 from .package_finder import find_outermost_package_root
 from .package_searcher import find_module_in_package_hierarchy
 from .dependency_graph import DependencyGraph
