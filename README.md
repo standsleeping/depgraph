@@ -11,7 +11,7 @@ python -m depgraph <file_path>
 
 Example:
 ```bash
-python -m depgraph ./depgraph/analyze_file.py
+python -m depgraph ./depgraph/process_file.py
 ```
 
 ### Options
@@ -24,7 +24,7 @@ python -m depgraph ./depgraph/analyze_file.py
 
 Example with all options:
 ```bash
-python -m depgraph ./depgraph/analyze_file.py \
+python -m depgraph ./depgraph/process_file.py \
   --depth 6 \
   --log-level DEBUG \
   --log-file ./depgraph.log \

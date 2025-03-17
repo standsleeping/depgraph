@@ -1,11 +1,11 @@
 from depgraph.cli.parse_args import parse_args
 from depgraph.logger.setup_logger import setup_logger
-from depgraph.processors import analyze_file
+from depgraph.processors import process_file
 from depgraph.formatters.print_analysis import print_analysis
 from depgraph.data.file_analysis import FileAnalysis
 from depgraph.data.scope_info import ScopeInfo
 from depgraph.data.scope_name import ScopeName
-from depgraph.processors.analyze_scope import analyze_scope
+from depgraph.processors.process_scope import process_scope
 
 
 def run_analysis() -> None:
@@ -27,7 +27,7 @@ def run_analysis() -> None:
         logger.debug(f"  scope_filter: {scope_filter}")
 
     logger.info(f"Analyzing file '{file_path}'")
-    file_analysis: FileAnalysis = analyze_file(file_path=file_path, depth=depth)
+    file_analysis: FileAnalysis = process_file(file_path=file_path, depth=depth)
 
     module_scope_info: ScopeInfo
     if scope_filter:
@@ -35,7 +35,7 @@ def run_analysis() -> None:
     else:
         module_scope_info = file_analysis.scopes[ScopeName("<module>")]
 
-    assignments = analyze_scope(module_scope_info)
+    assignments = process_scope(module_scope_info)
 
     logger.info("Analysis complete!")
 

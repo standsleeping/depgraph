@@ -4,8 +4,8 @@ from depgraph.data.assignment_data import AssignmentData
 from depgraph.visitors.assignment_visitor import AssignmentVisitor
 
 
-def analyze_scope(scope: ScopeInfo) -> List[AssignmentData]:
-    """Analyze all assignments within the given scope.
+def process_scope(scope: ScopeInfo) -> List[AssignmentData]:
+    """Process all assignments within the given scope.
 
     Args:
         scope: A scope to analyze

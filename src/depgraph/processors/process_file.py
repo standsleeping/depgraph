@@ -4,7 +4,7 @@ from depgraph.visitors import ScopeVisitor
 from depgraph.data.file_analysis import FileAnalysis
 
 
-def analyze_file(file_path: str, depth: int) -> FileAnalysis:
+def process_file(file_path: str, depth: int) -> FileAnalysis:
     """
     Analyze a Python file by parsing it into an AST and identifying scopes.
 

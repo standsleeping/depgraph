@@ -7,7 +7,7 @@
       "request": "launch",
       "module": "depgraph",
       "args": [
-        "./depgraph/analyze_file.py",
+        "./depgraph/process_file.py",
         "--log-level",
         "DEBUG",
         "--depth",
@@ -22,7 +22,7 @@
       "request": "launch",
       "module": "depgraph.import_crawler",
       "args": [
-        "${workspaceFolder}/depgraph/analyze_file.py",
+        "${workspaceFolder}/depgraph/process_file.py",
         "--log-level",
         "DEBUG",
       ],

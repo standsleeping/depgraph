@@ -13,7 +13,7 @@ python -m depgraph.import_crawler --path <path-to-python-file-or-directory>
 Example:
 
 ```bash
-python -m depgraph.import_crawler --path ./depgraph/analyze_file.py
+python -m depgraph.import_crawler --path ./depgraph/process_file.py
 ```
 
 
@@ -44,7 +44,7 @@ When using `--output-file`, the analysis results will be written to the specifie
 Example with all options:
 
 ```bash
-python -m depgraph.import_crawler ./depgraph/analyze_file.py \
+python -m depgraph.import_crawler ./depgraph/process_file.py \
   --log-level DEBUG \
   --log-file ./depgraph.log \
   --display all --output-file ./depgraph.json --output-format json

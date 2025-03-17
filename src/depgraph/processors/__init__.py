@@ -1,3 +1,3 @@
-from .analyze_file import analyze_file
+from .process_file import process_file
 
-__all__ = ["analyze_file"]
+__all__ = ["process_file"]
