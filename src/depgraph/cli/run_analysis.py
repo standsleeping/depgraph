@@ -1,8 +1,9 @@
+from typing import Dict, Any
 from depgraph.cli.parse_args import parse_args
 from depgraph.logger.setup_logger import setup_logger
 from depgraph.processors import process_file
-from depgraph.formatters.print_analysis import print_analysis
 from depgraph.formatters.write_graph_output import write_output
+from depgraph.formatters.process_output import process_output
 from depgraph.data.file_analysis import FileAnalysis
 from depgraph.data.scope_info import ScopeInfo
 from depgraph.data.scope_name import ScopeName
@@ -50,7 +51,7 @@ def run_analysis() -> None:
 
     logger.info("File analysis complete!")
 
-    print_analysis(
+    output: Dict[str, Any] = process_output(
         analysis=file_analysis,
         scope_filter=scope_filter,
         assignments=assignments,
@@ -62,7 +63,11 @@ def run_analysis() -> None:
         logger=logger,
     )
 
+    json_graph = graph.to_json()
+
+    output["graph"] = json_graph
+
     if output_file and output_format:
-        write_output(graph, output_file, output_format, logger)
+        write_output(output, output_file, output_format, logger)
 
     logger.info("Crawler analysis complete!")
