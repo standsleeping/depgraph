@@ -12,15 +12,18 @@ def crawl(
     file_path: str,
     display_options: Set[str],
     logger: Logger,
-) -> DependencyGraph:
+) -> tuple[DependencyGraph, dict]:
     """Crawl the import graph for the given entry file.
 
     Args:
         file_path: The file to crawl
         display_options: The display options to use
-        output_file: The output file to use
-        output_format: The output format to use
         logger: The logger to use
+
+    Returns:
+        A tuple containing:
+        - DependencyGraph: The dependency graph of imported modules
+        - dict: Unresolved imports categorized as local, system, and third-party
     """
 
     logger.info(f"Analyzing imports for {os.path.basename(file_path)}")
@@ -29,7 +32,8 @@ def crawl(
 
     graph: DependencyGraph = crawler.graph
 
-    # Print unresolved imports
+    # Get unresolved imports for JSON output and print them
+    unresolved_imports = crawler.get_unresolved_imports()
     crawler.print_unresolved_imports()
 
     # Handle console display options
@@ -53,6 +57,6 @@ def crawl(
         json_graph = graph.to_json()
         print(json.dumps(json_graph, indent=2))
 
-    return graph
+    return graph, unresolved_imports
 
 

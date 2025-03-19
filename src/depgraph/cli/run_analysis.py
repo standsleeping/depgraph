@@ -57,7 +57,7 @@ def run_analysis() -> None:
         assignments=assignments,
     )
 
-    graph = crawl(
+    graph, unresolved_imports = crawl(
         file_path=file_path,
         display_options=display_options,
         logger=logger,
@@ -66,6 +66,7 @@ def run_analysis() -> None:
     json_graph = graph.to_json()
 
     output["graph"] = json_graph
+    output["unresolved_imports"] = unresolved_imports
 
     if output_file and output_format:
         write_output(output, output_file, output_format, logger)

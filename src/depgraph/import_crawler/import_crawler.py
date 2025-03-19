@@ -251,6 +251,10 @@ class ImportCrawler:
     def print_unresolved_imports(self) -> None:
         """Prints the sets of unresolved imports by category."""
         self.import_categorizer.print_unresolved_imports()
+        
+    def get_unresolved_imports(self) -> dict:
+        """Returns unresolved imports as a dictionary for JSON output."""
+        return self.import_categorizer.get_unresolved_imports()
 
     def is_src_layout_project(self) -> bool:
         """

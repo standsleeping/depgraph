@@ -74,3 +74,18 @@ class ImportCategorizer:
                 for import_name in sorted(self.third_party_imports):
                     print(f"  {import_name}")
             print()
+            
+    def get_unresolved_imports(self) -> dict:
+        """Returns unresolved imports as a dictionary for JSON output."""
+        result = {}
+        
+        if self.local_imports:
+            result["local_imports"] = sorted(list(self.local_imports))
+            
+        if self.system_imports:
+            result["system_imports"] = sorted(list(self.system_imports))
+            
+        if self.third_party_imports:
+            result["third_party_imports"] = sorted(list(self.third_party_imports))
+            
+        return result
