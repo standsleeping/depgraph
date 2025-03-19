@@ -1,3 +1,4 @@
+import json
 from typing import Dict, Any
 from depgraph.cli.parse_args import parse_args
 from depgraph.logger.setup_logger import setup_logger
@@ -18,7 +19,6 @@ def run_analysis() -> None:
         log_level,
         log_file,
         scope_filter,
-        display_options,
         output_file,
         output_format,
     ) = parse_args()
@@ -59,7 +59,6 @@ def run_analysis() -> None:
 
     graph, unresolved_imports = crawl(
         file_path=file_path,
-        display_options=display_options,
         logger=logger,
     )
 
@@ -68,7 +67,11 @@ def run_analysis() -> None:
     output["graph"] = json_graph
     output["unresolved_imports"] = unresolved_imports
 
+    logger.info("Analysis complete!")
+
     if output_file and output_format:
         write_output(output, output_file, output_format, logger)
+    else:
+        # indent the output
+        print(json.dumps(output, indent=4))
 
-    logger.info("Crawler analysis complete!")

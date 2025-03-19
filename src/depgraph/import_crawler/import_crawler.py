@@ -4,7 +4,7 @@ import sys
 import logging
 import sysconfig
 from importlib.util import find_spec
-from typing import Optional
+from typing import Optional, Dict, List
 from .module_info import ModuleInfo
 from depgraph.logger.setup_logger import setup_logger
 from .package_finder import find_outermost_package_root
@@ -242,17 +242,7 @@ class ImportCrawler:
 
         return None
 
-    def print_graph(self) -> None:
-        """Prints the graph in a human-readable format."""
-        for source, targets in self.graph.dependencies.items():
-            printed_set = ", ".join([str(module) for module in targets])
-            print(f"{source} -> [{printed_set}]")
-
-    def print_unresolved_imports(self) -> None:
-        """Prints the sets of unresolved imports by category."""
-        self.import_categorizer.print_unresolved_imports()
-        
-    def get_unresolved_imports(self) -> dict:
+    def get_unresolved_imports(self) -> Dict[str, List[str]]:
         """Returns unresolved imports as a dictionary for JSON output."""
         return self.import_categorizer.get_unresolved_imports()
 

@@ -15,19 +15,6 @@
       ],
       "console": "integratedTerminal",
       "justMyCode": true
-    },
-    {
-      "name": "Debug Import Crawler",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "depgraph.import_crawler",
-      "args": [
-        "${workspaceFolder}/depgraph/process_file.py",
-        "--log-level",
-        "DEBUG",
-      ],
-      "console": "integratedTerminal",
-      "justMyCode": true
     }
   ]
 } 

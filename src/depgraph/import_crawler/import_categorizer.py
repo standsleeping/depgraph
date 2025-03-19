@@ -1,6 +1,6 @@
 from importlib.util import find_spec
 import os
-from typing import Set
+from typing import Set, Dict, List
 from logging import Logger
 
 
@@ -54,38 +54,17 @@ class ImportCategorizer:
         # If not system or third-party, assume it's local
         self.local_imports.add(module_name)
 
-    def print_unresolved_imports(self) -> None:
-        """Prints the sets of unresolved imports by category."""
-        if any([self.local_imports, self.system_imports, self.third_party_imports]):
-            print("-" * 80)
-
-            if self.local_imports:
-                print("\nUnresolved local imports:")
-                for import_name in sorted(self.local_imports):
-                    print(f"  {import_name}")
-
-            if self.system_imports:
-                print("\nSystem imports (detected, not followed):")
-                for import_name in sorted(self.system_imports):
-                    print(f"  {import_name}")
-
-            if self.third_party_imports:
-                print("\nThird-party imports (detected, not followed):")
-                for import_name in sorted(self.third_party_imports):
-                    print(f"  {import_name}")
-            print()
-            
-    def get_unresolved_imports(self) -> dict:
+    def get_unresolved_imports(self) -> Dict[str, List[str]]:
         """Returns unresolved imports as a dictionary for JSON output."""
         result = {}
-        
+
         if self.local_imports:
             result["local_imports"] = sorted(list(self.local_imports))
-            
+
         if self.system_imports:
             result["system_imports"] = sorted(list(self.system_imports))
-            
+
         if self.third_party_imports:
             result["third_party_imports"] = sorted(list(self.third_party_imports))
-            
+
         return result

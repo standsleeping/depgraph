@@ -1,8 +1,8 @@
 import argparse
-from typing import Tuple, Optional, Set
+from typing import Tuple, Optional
 
 
-def parse_args() -> Tuple[str, int, str, Optional[str], Optional[str], Set[str], Optional[str], Optional[str]]:
+def parse_args() -> Tuple[str, int, str, Optional[str], Optional[str], Optional[str], Optional[str]]:
     """Parse command line arguments.
 
     Returns:
@@ -12,7 +12,6 @@ def parse_args() -> Tuple[str, int, str, Optional[str], Optional[str], Set[str],
         - log_level: Logging level to use
         - log_file: Optional path to log file
         - scope_filter: Optional scope name to filter the output
-        - display_options: Set of display formats for console output
         - output_file: Optional path to write analysis results
         - output_format: Format for output file (defaults to 'json')
     """
@@ -52,15 +51,6 @@ def parse_args() -> Tuple[str, int, str, Optional[str], Optional[str], Set[str],
     )
 
     parser.add_argument(
-        "-d",
-        "--display",
-        choices=["simple", "tree", "json", "all"],
-        default=["simple"],
-        nargs="+",
-        help="Display format(s) to use for console output. Can specify multiple formats.",
-    )
-
-    parser.add_argument(
         "-o",
         "--output-file",
         help="Write analysis results to specified file",
@@ -76,10 +66,6 @@ def parse_args() -> Tuple[str, int, str, Optional[str], Optional[str], Set[str],
 
     args = parser.parse_args()
 
-    # Convert display options to set
-    display_options = set(args.display)
-    if "all" in display_options:
-        display_options = {"simple", "tree", "json"}
 
     return (
         args.entry_file,
@@ -87,7 +73,6 @@ def parse_args() -> Tuple[str, int, str, Optional[str], Optional[str], Set[str],
         args.log_level,
         args.log_file,
         args.scope_filter,
-        display_options,
         args.output_file,
         args.output_format,
     )
