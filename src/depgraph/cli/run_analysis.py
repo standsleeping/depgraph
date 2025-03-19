@@ -2,11 +2,13 @@ from depgraph.cli.parse_args import parse_args
 from depgraph.logger.setup_logger import setup_logger
 from depgraph.processors import process_file
 from depgraph.formatters.print_analysis import print_analysis
+from depgraph.formatters.write_graph_output import write_output
 from depgraph.data.file_analysis import FileAnalysis
 from depgraph.data.scope_info import ScopeInfo
 from depgraph.data.scope_name import ScopeName
 from depgraph.processors.process_scope import process_scope
 from depgraph.import_crawler.crawl import crawl
+
 
 def run_analysis() -> None:
     (
@@ -54,12 +56,13 @@ def run_analysis() -> None:
         assignments=assignments,
     )
 
-    crawl(
+    graph = crawl(
         file_path=file_path,
         display_options=display_options,
-        output_file=output_file,
-        output_format=output_format,
         logger=logger,
     )
+
+    if output_file and output_format:
+        write_output(graph, output_file, output_format, logger)
 
     logger.info("Crawler analysis complete!")

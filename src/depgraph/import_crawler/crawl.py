@@ -5,16 +5,14 @@ from .import_crawler import ImportCrawler
 from .tree_printer import TreePrinter
 from .module_info import ModuleInfo
 from .dependency_graph import DependencyGraph
-from typing import Optional, Set
+from typing import Set
 
 
 def crawl(
     file_path: str,
     display_options: Set[str],
-    output_file: Optional[str],
-    output_format: Optional[str],
     logger: Logger,
-) -> None:
+) -> DependencyGraph:
     """Crawl the import graph for the given entry file.
 
     Args:
@@ -24,7 +22,6 @@ def crawl(
         output_format: The output format to use
         logger: The logger to use
     """
-    final_output_format = output_format if output_format is not None else "json"
 
     logger.info(f"Analyzing imports for {os.path.basename(file_path)}")
     crawler = ImportCrawler(file_path, logger)
@@ -56,25 +53,6 @@ def crawl(
         json_graph = graph.to_json()
         print(json.dumps(json_graph, indent=2))
 
-    if output_file:
-        write_output(graph, output_file, final_output_format)
-        logger.info(f"Analysis results written to {output_file}")
-
-    logger.info("Analysis complete!")
-
-
-def write_output(graph: DependencyGraph, output_file: str, output_format: str) -> None:
-    """Write analysis results to file in specified format.
-
-    Args:
-        graph: The dependency graph to output
-        output_file: Path to output file
-        output_format: Format to write (currently only 'json' supported)
-    """
-    if output_format == "json":
-        json_data = graph.to_json()
-        os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(json_data, f, indent=2)
+    return graph
 
 
