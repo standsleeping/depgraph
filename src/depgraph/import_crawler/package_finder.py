@@ -1,11 +1,11 @@
-import os
+from pathlib import Path
 import logging
 from depgraph.logger.setup_logger import setup_logger
 
 
 def find_outermost_package_root(
-    start_dir: str, logger: logging.Logger | None = None
-) -> str:
+    start_dir: str | Path, logger: logging.Logger | None = None
+) -> Path:
     """
     Recursively searches for the outermost Python package/module directory.
     A directory is considered a Python package/module if it:
@@ -22,38 +22,39 @@ def find_outermost_package_root(
     if logger is None:
         logger = setup_logger()
 
-    logger.debug(f"Finding outermost package root starting from: {start_dir}")
+    start_path = Path(start_dir)
+    logger.debug(f"Finding outermost package root starting from: {start_path}")
 
-    def is_python_dir(dir_path: str) -> bool:
+    def is_python_dir(dir_path: Path) -> bool:
         # Check for __init__.py
-        if os.path.exists(os.path.join(dir_path, "__init__.py")):
+        if (dir_path / "__init__.py").exists():
             return True
 
         # Check for any .py files
-        for file in os.listdir(dir_path):
-            if file.endswith(".py"):
+        for file in dir_path.iterdir():
+            if file.is_file() and file.suffix == ".py":
                 return True
         return False
 
-    current_dir = os.path.abspath(start_dir)
-    last_valid_dir = current_dir
+    current_path = start_path.resolve()
+    last_valid_path = current_path
 
     while True:
-        parent_dir = os.path.dirname(current_dir)
+        parent_path = current_path.parent
 
         # Stop if we reached the root directory
-        if parent_dir == current_dir:
+        if parent_path == current_path:
             break
 
         try:
-            if is_python_dir(parent_dir):
-                last_valid_dir = parent_dir
-                current_dir = parent_dir
+            if is_python_dir(parent_path):
+                last_valid_path = parent_path
+                current_path = parent_path
             else:
                 break
         except (PermissionError, FileNotFoundError):
             # Stop if we can't access the directory
             break
 
-    logger.debug(f"Found outermost root: {last_valid_dir}")
-    return last_valid_dir
+    logger.debug(f"Found outermost root: {last_valid_path}")
+    return last_valid_path
