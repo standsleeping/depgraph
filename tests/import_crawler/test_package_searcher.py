@@ -45,12 +45,12 @@ def test_get_ancestor_paths(nested_package_structure):
     deep_dir = nested_package_structure / "root_pkg/subpkg/deep"
     root_dir = nested_package_structure / "root_pkg"
 
-    paths = get_ancestor_paths(str(deep_dir), str(root_dir))
+    paths = get_ancestor_paths(deep_dir, root_dir)
 
     expected = [
-        str(deep_dir),
-        str(deep_dir.parent),  # subpkg
-        str(deep_dir.parent.parent),  # root_pkg
+        deep_dir.resolve(),
+        deep_dir.parent.resolve(),  # subpkg
+        deep_dir.parent.parent.resolve(),  # root_pkg
     ]
 
     assert paths == expected
@@ -60,9 +60,9 @@ def test_get_ancestor_paths_same_dir(nested_package_structure):
     """Returns single path when start and root are the same."""
     root_dir = nested_package_structure / "root_pkg"
 
-    paths = get_ancestor_paths(str(root_dir), str(root_dir))
+    paths = get_ancestor_paths(root_dir, root_dir)
 
-    assert paths == [str(root_dir)]
+    assert paths == [root_dir.resolve()]
 
 
 def test_find_module_direct_file(nested_package_structure):
@@ -70,9 +70,9 @@ def test_find_module_direct_file(nested_package_structure):
     deep_dir = nested_package_structure / "root_pkg/subpkg/deep"
     root_dir = nested_package_structure / "root_pkg"
 
-    result = find_module_in_package_hierarchy("utils", str(deep_dir), str(root_dir))
+    result = find_module_in_package_hierarchy("utils", deep_dir, root_dir)
 
-    assert result == str(root_dir / "utils.py")
+    assert result == root_dir / "utils.py"
 
 
 def test_find_module_as_package(nested_package_structure):
@@ -80,9 +80,9 @@ def test_find_module_as_package(nested_package_structure):
     deep_dir = nested_package_structure / "root_pkg/subpkg/deep"
     root_dir = nested_package_structure / "root_pkg"
 
-    result = find_module_in_package_hierarchy("subpkg", str(deep_dir), str(root_dir))
+    result = find_module_in_package_hierarchy("subpkg", deep_dir, root_dir)
 
-    assert result == str(root_dir / "subpkg/__init__.py")
+    assert result == root_dir / "subpkg" / "__init__.py"
 
 
 def test_find_module_dotted_filename(nested_package_structure):
@@ -90,11 +90,9 @@ def test_find_module_dotted_filename(nested_package_structure):
     deep_dir = nested_package_structure / "root_pkg/subpkg/deep"
     root_dir = nested_package_structure / "root_pkg"
 
-    result = find_module_in_package_hierarchy(
-        "views.render", str(deep_dir), str(root_dir)
-    )
+    result = find_module_in_package_hierarchy("views.render", deep_dir, root_dir)
 
-    assert result == str(root_dir / "views.render.py")
+    assert result == root_dir / "views.render.py"
 
 
 def test_find_module_nonexistent(nested_package_structure):
@@ -102,9 +100,7 @@ def test_find_module_nonexistent(nested_package_structure):
     deep_dir = nested_package_structure / "root_pkg/subpkg/deep"
     root_dir = nested_package_structure / "root_pkg"
 
-    result = find_module_in_package_hierarchy(
-        "nonexistent", str(deep_dir), str(root_dir)
-    )
+    result = find_module_in_package_hierarchy("nonexistent", deep_dir, root_dir)
 
     assert result is None
 
@@ -114,6 +110,6 @@ def test_find_module_in_middle_package(nested_package_structure):
     deep_dir = nested_package_structure / "root_pkg/subpkg/deep"
     root_dir = nested_package_structure / "root_pkg"
 
-    result = find_module_in_package_hierarchy("mid_utils", str(deep_dir), str(root_dir))
+    result = find_module_in_package_hierarchy("mid_utils", deep_dir, root_dir)
 
-    assert result == str(root_dir / "subpkg/mid_utils.py")
+    assert result == root_dir / "subpkg" / "mid_utils.py"

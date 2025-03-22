@@ -1,5 +1,4 @@
 import ast
-import os
 import sys
 import logging
 import sysconfig
@@ -10,7 +9,6 @@ from .module_info import ModuleInfo
 from depgraph.logger.setup_logger import setup_logger
 from .package_finder import find_outermost_package_root
 from .package_searcher import find_module_in_package_hierarchy
-from .new_package_searcher import new_find_module_in_package_hierarchy
 from .dependency_graph import DependencyGraph
 from .site_packages import find_project_site_packages
 from .import_categorizer import ImportCategorizer
@@ -33,9 +31,7 @@ class ImportCrawler:
     def __init__(
         self, abs_file_path: Path, logger: logging.Logger | None = None
     ) -> None:
-        self.root_file = str(abs_file_path)
         self.root_file_path = abs_file_path
-        self.parent_path_str = os.path.dirname(self.root_file)
         self.parent_path = abs_file_path.parent
         self.visited: set[str] = set()
         self.visited_paths: set[Path] = set()
@@ -61,7 +57,7 @@ class ImportCrawler:
 
         # Get site-packages paths for the project being analyzed
         self.site_packages_paths: set[Path] = find_project_site_packages(
-            self.parent_path_str,
+            self.parent_path,
             self.logger,
         )
 
@@ -186,7 +182,7 @@ class ImportCrawler:
         # First try searching through package hierarchy
         outer_root: Path = find_outermost_package_root(search_dir, self.logger)
 
-        module_path: Path | None = new_find_module_in_package_hierarchy(
+        module_path: Path | None = find_module_in_package_hierarchy(
             module_name,
             search_dir,
             outer_root,

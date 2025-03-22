@@ -4,7 +4,7 @@ from typing import Set
 import sysconfig
 
 
-def find_project_site_packages(project_root: str | Path, logger: logging.Logger) -> Set[Path]:
+def find_project_site_packages(project_root: Path, logger: logging.Logger) -> Set[Path]:
     """
     Find site-packages directories associated with the project being analyzed.
     Searches from project root upwards until finding Python environment markers.
@@ -17,7 +17,7 @@ def find_project_site_packages(project_root: str | Path, logger: logging.Logger)
         Set of absolute paths to site-packages directories
     """
     site_packages = set()
-    current_dir = Path(project_root).resolve()
+    current_dir = project_root.resolve()
 
     while True:
         # Virtual environment markers
