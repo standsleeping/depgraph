@@ -196,6 +196,16 @@ class ImportCrawler:
             module_name, search_dir, outer_root, self.logger
         )
 
+        # Debug info to compare paths
+        if str(module_path) != str(new_module_path):
+            self.logger.error(f"Path mismatch for {module_name}:")
+            self.logger.error(
+                f"Old path: '{module_path}' (type: {type(module_path).__name__})"
+            )
+            self.logger.error(
+                f"New path: '{new_module_path}' (type: {type(new_module_path).__name__})"
+            )
+
         assert str(module_path) == str(new_module_path)
 
         if module_path:

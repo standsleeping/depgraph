@@ -7,8 +7,10 @@ from depgraph.logger.setup_logger import setup_logger
 def get_ancestor_paths(start_dir: Path, outer_root: Path) -> List[Path]:
     """Returns a list of all ancestor directory paths from start_dir up to outer_root."""
     paths = []
-    current = start_dir.resolve()
-    outer_root = outer_root.resolve()
+    # When you use Path.resolve(), it resolves symlinks.
+    # The old implementation with os.path.abspath() doesn't do that.
+    current = start_dir.absolute()
+    outer_root = outer_root.absolute()
 
     while True:
         paths.append(current)
