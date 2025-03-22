@@ -1,12 +1,12 @@
 from importlib.util import find_spec
-import os
+from pathlib import Path
 from typing import Set, Dict, List
 from logging import Logger
 
 
 class ImportCategorizer:
     def __init__(
-        self, stdlib_paths: Set[str], site_packages_paths: Set[str], logger: Logger
+        self, stdlib_paths: Set[str], site_packages_paths: Set[Path], logger: Logger
     ) -> None:
         self.stdlib_paths = stdlib_paths
         self.site_packages_paths = site_packages_paths
@@ -27,9 +27,9 @@ class ImportCategorizer:
                     return
 
                 # Check if it's in site-packages
-                module_path = os.path.abspath(spec.origin)
+                module_path = Path(spec.origin).resolve()
                 is_third_party = any(
-                    module_path.startswith(site_pkg)
+                    str(module_path).startswith(str(site_pkg))
                     for site_pkg in self.site_packages_paths
                 )
                 if is_third_party:
@@ -42,12 +42,12 @@ class ImportCategorizer:
         base_module = module_name.split(".")[0]  # Get the root package name
         for site_pkg in self.site_packages_paths:
             potential_locations = [
-                os.path.join(site_pkg, base_module),  # As a directory/package
-                os.path.join(site_pkg, f"{base_module}.py"),  # As a .py file
-                os.path.join(site_pkg, f"{base_module}.pyi"),  # As a .pyi file
-                os.path.join(site_pkg, f"{base_module}.so"),  # As a compiled module
+                site_pkg / base_module,  # As a directory/package
+                site_pkg / f"{base_module}.py",  # As a .py file
+                site_pkg / f"{base_module}.pyi",  # As a .pyi file
+                site_pkg / f"{base_module}.so",  # As a compiled module
             ]
-            if any(os.path.exists(loc) for loc in potential_locations):
+            if any(loc.exists() for loc in potential_locations):
                 self.third_party_imports.add(module_name)
                 return
 

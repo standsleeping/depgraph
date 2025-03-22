@@ -1,5 +1,6 @@
 import os
 import pytest
+from pathlib import Path
 from unittest.mock import Mock, patch
 from depgraph.import_crawler.import_categorizer import ImportCategorizer
 
@@ -13,7 +14,7 @@ def stdlib_paths():
 def site_packages_paths(tmp_path):
     site_pkg = tmp_path / "site-packages"
     site_pkg.mkdir()
-    return {str(site_pkg)}
+    return {site_pkg}
 
 
 @pytest.fixture
@@ -59,7 +60,7 @@ def test_categorize_stdlib_module(categorizer, stdlib_paths):
 def test_categorize_third_party_module(categorizer, site_packages_paths):
     """Categorizes third-party modules."""
     site_pkg = list(site_packages_paths)[0]
-    third_party_module = os.path.join(site_pkg, "requests.py")
+    third_party_module = str(site_pkg / "requests.py")
 
     with patch(
         "depgraph.import_crawler.import_categorizer.find_spec"
@@ -90,8 +91,8 @@ def test_categorize_local_module(categorizer):
 def test_categorize_third_party_package_directory(categorizer, site_packages_paths):
     """Categorizes third-party packages that exist as directories."""
     site_pkg = list(site_packages_paths)[0]
-    package_dir = os.path.join(site_pkg, "django")
-    os.makedirs(package_dir)
+    package_dir = site_pkg / "django"
+    package_dir.mkdir()
 
     with patch(
         "depgraph.import_crawler.import_categorizer.find_spec"

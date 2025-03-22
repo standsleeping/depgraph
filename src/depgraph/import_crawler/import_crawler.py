@@ -61,7 +61,7 @@ class ImportCrawler:
         self.stdlib_path_objs = set([Path(p) for p in paths.values()])
 
         # Get site-packages paths for the project being analyzed
-        self.site_packages_paths = find_project_site_packages(
+        self.site_packages_paths: set[Path] = find_project_site_packages(
             self.project_root,
             self.logger,
         )
