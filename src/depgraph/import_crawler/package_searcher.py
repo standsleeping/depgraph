@@ -23,8 +23,8 @@ def get_ancestor_paths(start_dir: Path, outer_root: Path) -> List[Path]:
 
 def find_module_in_package_hierarchy(
     module_name: str,
-    start_dir: Path | str,
-    outer_root: Path | str,
+    start_dir: Path,
+    outer_root: Path,
     logger: Optional[logging.Logger] = None,
 ) -> Optional[Path]:
     """
@@ -39,15 +39,10 @@ def find_module_in_package_hierarchy(
     if logger is None:
         logger = setup_logger()
 
-    start_path = Path(start_dir)
-    outer_root_path = Path(outer_root)
-
-    logger.debug(
-        f"Searching for {module_name} from {start_path} up to {outer_root_path}"
-    )
+    logger.debug(f"Searching for {module_name} from {start_dir} up to {outer_root}")
 
     # Get all possible directory paths to search
-    search_paths = get_ancestor_paths(start_path, outer_root_path)
+    search_paths = get_ancestor_paths(start_dir, outer_root)
 
     # For each path, try to find the module
     for path in search_paths:
