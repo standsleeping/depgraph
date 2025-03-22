@@ -21,11 +21,6 @@ class ImportCrawler:
     Args:
         abs_file_path: The absolute path to the file to crawl
         logger: The logger to use
-
-    NOTES:
-    - self.root_file (str) is deprecated. Replace with self.root_file_path (Path).
-    - self.parent_path_str (str) is deprecated. The Path-appropriate version is self.parent_path (Path).
-    - (More deprecated items to come)
     """
 
     def __init__(

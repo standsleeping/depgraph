@@ -49,28 +49,28 @@ def temp_project_structure(tmp_path):
 def test_find_package_root_from_inner_module(temp_project_structure):
     """Finds package root starting from an inner module."""
     start_dir = temp_project_structure / "outer_pkg/middle_pkg/inner_pkg"
-    result = find_outermost_package_root(str(start_dir))
+    result = find_outermost_package_root(start_dir)
     assert result == temp_project_structure / "outer_pkg"
 
 
 def test_find_package_root_from_sibling_package(temp_project_structure):
     """Finds package root starting from a sibling package."""
     start_dir = temp_project_structure / "outer_pkg/sibling_pkg"
-    result = find_outermost_package_root(str(start_dir))
+    result = find_outermost_package_root(start_dir)
     assert result == temp_project_structure / "outer_pkg"
 
 
 def test_non_package_directory(temp_project_structure):
     """Finds package root starting from a non-package directory."""
     start_dir = temp_project_structure / "not_a_pkg"
-    result = find_outermost_package_root(str(start_dir))
+    result = find_outermost_package_root(start_dir)
     assert result == start_dir
 
 
 def test_py_files_no_init(temp_project_structure):
     """Finds root from directory containing .py files but no __init__.py."""
     start_dir = temp_project_structure / "outer_pkg/sibling_pkg"
-    result = find_outermost_package_root(str(start_dir))
+    result = find_outermost_package_root(start_dir)
     assert result == temp_project_structure / "outer_pkg"
 
 
@@ -83,7 +83,7 @@ def test_permission_denied(temp_project_structure):
 
     try:
         start_dir = restricted_dir
-        result = find_outermost_package_root(str(start_dir))
+        result = find_outermost_package_root(start_dir)
         assert result == start_dir
     finally:
         restricted_dir.chmod(0o755)
@@ -92,6 +92,6 @@ def test_permission_denied(temp_project_structure):
 def test_absolute_path_handling(temp_project_structure):
     """Handles relative paths being converted to absolute paths."""
     start_dir = temp_project_structure / "outer_pkg/middle_pkg"
-    result = find_outermost_package_root(str(start_dir))
+    result = find_outermost_package_root(start_dir)
     assert result.is_absolute()
     assert result == temp_project_structure / "outer_pkg"

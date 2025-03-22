@@ -4,7 +4,7 @@ from depgraph.logger.setup_logger import setup_logger
 
 
 def find_outermost_package_root(
-    start_dir: str | Path, logger: logging.Logger | None = None
+    start_dir: Path, logger: logging.Logger | None = None
 ) -> Path:
     """
     Recursively searches for the outermost Python package/module directory.
@@ -22,8 +22,7 @@ def find_outermost_package_root(
     if logger is None:
         logger = setup_logger()
 
-    start_path = Path(start_dir)
-    logger.debug(f"Finding outermost package root starting from: {start_path}")
+    logger.debug(f"Finding outermost package root starting from: {start_dir}")
 
     def is_python_dir(dir_path: Path) -> bool:
         # Check for __init__.py
@@ -36,7 +35,7 @@ def find_outermost_package_root(
                 return True
         return False
 
-    current_path = start_path.resolve()
+    current_path = start_dir.resolve()
     last_valid_path = current_path
 
     while True:
