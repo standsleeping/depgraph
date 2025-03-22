@@ -194,7 +194,7 @@ def nested_package_structure(tmp_path):
 def test_find_module_with_package_expansion(nested_package_structure):
     """Resolves imports by expanding to outer package root."""
     deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
-    crawler = ImportCrawler(str(deep_module))
+    crawler = ImportCrawler(deep_module)
 
     # Try to find utils.py from the deep module directory
     search_dir = str(nested_package_structure / "root_pkg/subpkg/deep")
@@ -207,7 +207,7 @@ def test_find_module_with_package_expansion(nested_package_structure):
 def test_find_module_no_expansion_needed(nested_package_structure):
     """Finds module normally when expansion isn't needed."""
     root_init = nested_package_structure / "root_pkg/__init__.py"
-    crawler = ImportCrawler(str(root_init))
+    crawler = ImportCrawler(root_init)
 
     # Try to find utils.py from the root package directory
     search_dir = str(nested_package_structure / "root_pkg")
@@ -220,7 +220,7 @@ def test_find_module_no_expansion_needed(nested_package_structure):
 def test_find_module_expansion_fails(nested_package_structure):
     """Returns None when expansion doesn't help."""
     deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
-    crawler = ImportCrawler(str(deep_module))
+    crawler = ImportCrawler(deep_module)
 
     # Try to find a non-existent module
     search_dir = str(nested_package_structure / "root_pkg/subpkg/deep")
@@ -238,7 +238,7 @@ def test_find_module_respects_project_root(nested_package_structure, tmp_path):
     (outside_dir / "external.py").touch()
 
     deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
-    crawler = ImportCrawler(str(deep_module))
+    crawler = ImportCrawler(deep_module)
 
     # Try to find the external module from inside the project root
     search_dir = str(nested_package_structure / "root_pkg")

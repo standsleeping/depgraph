@@ -94,7 +94,7 @@ def test_find_module_with_package_expansion(tmp_path):
     deep_module.write_text("from ...utils import helper")
 
     # Initialize crawler with the deep module as the root file
-    crawler = ImportCrawler(str(deep_module))
+    crawler = ImportCrawler(deep_module)
 
     # Try to find utils.py from deep inside the package
     result = crawler.find_module("utils", str(deep_pkg))
@@ -111,7 +111,7 @@ def test_find_module_expansion_not_needed(tmp_path):
     module_file.touch()
 
     # Initialize crawler with the module we're looking for
-    crawler = ImportCrawler(str(module_file))
+    crawler = ImportCrawler(module_file)
 
     result = crawler.find_module("module", str(pkg_dir))
     assert result == str(module_file)
@@ -131,7 +131,7 @@ def test_find_module_expansion_fails(tmp_path):
     test_module = subpkg / "test.py"
     test_module.touch()
 
-    crawler = ImportCrawler(str(test_module))
+    crawler = ImportCrawler(test_module)
 
     # Try to find non-existent module
     result = crawler.find_module("nonexistent", str(subpkg))
@@ -158,7 +158,7 @@ def test_find_module_with_middle_package_expansion(tmp_path):
     deep_module.write_text("from ..utils import helper")
 
     # Initialize crawler with the deep module as the root file
-    crawler = ImportCrawler(str(deep_module))
+    crawler = ImportCrawler(deep_module)
 
     # Try to find utils.py from deep inside the package
     result = crawler.find_module("utils", str(deep_pkg))
@@ -196,7 +196,7 @@ def test_find_module_with_recursive_package_search(tmp_path):
     )
 
     # Initialize crawler with the deep module as the root file
-    crawler = ImportCrawler(str(deep_module))
+    crawler = ImportCrawler(deep_module)
 
     # Try to find each module from deep inside the package
     search_dir = str(deep_pkg)

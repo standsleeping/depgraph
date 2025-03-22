@@ -190,7 +190,7 @@ def test_src_layout_detection(sample_src_project):
     main_file = sample_src_project / "src" / "sample_package" / "main.py"
 
     # Initialize the crawler with the main file
-    crawler = ImportCrawler(str(main_file))
+    crawler = ImportCrawler(main_file)
 
     # Assert that the crawler detects this is a src-layout project
     assert hasattr(crawler, "is_src_layout_project")
@@ -205,7 +205,7 @@ def test_import_resolution_in_src_layout(sample_src_project):
     )
 
     # Initialize the crawler
-    crawler = ImportCrawler(str(main_file))
+    crawler = ImportCrawler(main_file)
 
     # Build the graph with our file
     crawler.build_graph(str(main_file))
@@ -227,7 +227,7 @@ def test_complete_dependency_graph(sample_src_project):
     )
 
     # Initialize the crawler
-    crawler = ImportCrawler(str(main_file))
+    crawler = ImportCrawler(main_file)
 
     # Build the graph
     crawler.build_graph(str(main_file))
@@ -251,7 +251,7 @@ def test_complex_import_resolution(complex_src_project):
     main_file = complex_src_project / "src" / "complex_package" / "main.py"
 
     # Initialize the crawler and build the dependency graph
-    crawler = ImportCrawler(str(main_file))
+    crawler = ImportCrawler(main_file)
     crawler.build_graph(str(main_file))
 
     # Expected files that should be imported by main.py
@@ -297,7 +297,7 @@ def test_transitive_dependencies(complex_src_project):
     )
 
     # Initialize the crawler and build the dependency graph
-    crawler = ImportCrawler(str(main_file))
+    crawler = ImportCrawler(main_file)
     crawler.build_graph(str(main_file))
 
     # Check if there's a transitive dependency from main to common
@@ -338,7 +338,7 @@ def test_circular_dependencies(complex_src_project):
         )
 
     # Initialize the crawler and build the dependency graph
-    crawler = ImportCrawler(str(module_a_file))
+    crawler = ImportCrawler(module_a_file)
     crawler.build_graph(str(module_a_file))
 
     # Check that both modules import each other (circular dependency)

@@ -16,21 +16,49 @@ from .import_categorizer import ImportCategorizer
 
 
 class ImportCrawler:
-    def __init__(self, abs_file_path: Path, logger: logging.Logger | None = None) -> None:
-        self.abs_file_path = abs_file_path
+    """
+    Crawls the import graph for the given entry file.
+
+    Args:
+        abs_file_path: The absolute path to the file to crawl
+        logger: The logger to use
+
+    NOTES:
+    - self.root_file (str) is deprecated. Replace with self.root_file_path (Path).
+    - self.project_root (str) is deprecated. The Path-appropriate version is self.project_root_path (Path).
+    - self.stdlib_path_strs (set[str]) is deprecated. Replace with self.stdlib_path_objs (set[Path]).
+    - (More deprecated items to come)
+    """
+
+    def __init__(
+        self, abs_file_path: Path, logger: logging.Logger | None = None
+    ) -> None:
         self.root_file = str(abs_file_path)
+        self.root_file_path = abs_file_path
         self.project_root = os.path.dirname(self.root_file)
+        self.project_root_path = abs_file_path.parent
         self.visited: set[str] = set()
+        self.visited_paths: set[Path] = set()
         self.graph = DependencyGraph()
 
         if logger is None:
             logger = setup_logger()
         self.logger = logger
-        self.logger.debug(f"Initialized with root: {os.path.basename(self.root_file)}")
+
+        # Old str-based version:
+        # self.logger.debug(f"Initialized with root: {os.path.basename(self.root_file)}")
+
+        # New path-based version:
+        self.logger.debug(f"Initialized with root: {self.root_file_path.name}")
 
         # Get standard library paths
-        paths = sysconfig.get_paths()
-        self.stdlib_paths = set([os.path.abspath(p) for p in paths.values()])
+        paths: Dict[str, str] = sysconfig.get_paths()
+
+        # Old str-based version, a set of strings:
+        self.stdlib_path_strs = set([os.path.abspath(p) for p in paths.values()])
+
+        # New path-based version, a set of Path objects:
+        self.stdlib_path_objs = set([Path(p) for p in paths.values()])
 
         # Get site-packages paths for the project being analyzed
         self.site_packages_paths = find_project_site_packages(
@@ -40,7 +68,7 @@ class ImportCrawler:
 
         # Initialize the import categorizer
         self.import_categorizer = ImportCategorizer(
-            self.stdlib_paths,
+            self.stdlib_path_strs,
             self.site_packages_paths,
             self.logger,
         )
@@ -220,7 +248,7 @@ class ImportCrawler:
                 if spec.origin.endswith(".py"):
                     module_path = os.path.abspath(spec.origin)
                     # Check if module is in standard library
-                    for stdlib_path in self.stdlib_paths:
+                    for stdlib_path in self.stdlib_path_strs:
                         if module_path.startswith(stdlib_path):
                             return None
                     # Check if module is within project directory or src directory

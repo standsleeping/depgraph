@@ -9,7 +9,7 @@ def crawler(tmp_path):
     """Create a crawler instance with a temporary root file."""
     root_file = tmp_path / "root.py"
     root_file.touch()
-    return ImportCrawler(str(root_file))
+    return ImportCrawler(root_file)
 
 
 def create_test_file(tmp_path: Path, content: str) -> Path:
