@@ -57,6 +57,8 @@ class ImportCrawler:
         # We use strings here because this data is always used with importlib.util.find_spec.
         self.stdlib_path_strs = set([p for p in paths.values()])
 
+        self.stdlib_paths: set[Path] = set([Path(p) for p in paths.values()])
+
         # Get site-packages paths for the project being analyzed
         self.site_packages_paths: set[Path] = find_project_site_packages(
             self.parent_path_str,
@@ -209,7 +211,7 @@ class ImportCrawler:
             if "src" in path_parts:
                 src_index = path_parts.index("src")
                 # The project root should be the directory containing src/
-                src_project_root = Path(*path_parts[:src_index])
+                src_root = Path(*path_parts[:src_index])
 
                 # Try to resolve absolute imports through the src directory
                 if module_name.count(".") > 0:
@@ -219,16 +221,16 @@ class ImportCrawler:
                     possible_paths: list[Path] = []
 
                     # Try as a direct path from src directory
-                    src_path = src_project_root / "src"
+                    src_path = src_root / "src"
                     package_path = src_path.joinpath(*parts)
-                    possible_paths.append(package_path.with_suffix('.py'))
+                    possible_paths.append(package_path.with_suffix(".py"))
                     possible_paths.append(package_path / "__init__.py")
 
                     # Try with src/parts[0]/parts[1:] structure
                     if len(parts) > 1:
                         package_path = src_path / parts[0]
                         submodule_path = package_path.joinpath(*parts[1:])
-                        possible_paths.append(submodule_path.with_suffix('.py'))
+                        possible_paths.append(submodule_path.with_suffix(".py"))
                         possible_paths.append(submodule_path / "__init__.py")
 
                     # Check all possible paths
@@ -238,57 +240,52 @@ class ImportCrawler:
                             return path
 
         # If not found locally, try finding through sys.path
-        module_path = self.find_module_in_syspath(module_name)  # TODO: FRAME 1
-        if module_path:
-            return module_path
+        module_in_syspath: Path | None = self.find_module_in_syspath(module_name)
+        if module_in_syspath:
+            return module_in_syspath
 
         return None
 
-    def find_module_in_syspath(self, module_name: str) -> Optional[str]:
+    def find_module_in_syspath(self, module_name: str) -> Optional[Path]:
         """
         Attempts to find the module through sys.path.
         Returns the path if found and is a local module, None otherwise.
         For src-layout projects, temporarily adds the src parent directory to sys.path.
         """
         # Save the original sys.path to restore it later
-        original_sys_path = sys.path.copy()
+        original_sys_path: list[str] = sys.path.copy()
+
+        # Calculate src project root once if needed
+        src_root: Path | None = None
+        if self.is_src_layout_project():
+            path_parts: tuple[str, ...] = self.parent_path.parts
+            if "src" in path_parts:
+                src_index = path_parts.index("src")
+                # The project root should be the directory containing src/
+                src_root = Path(*path_parts[:src_index])
 
         try:
-            # Check if we're in a src-layout project and add the src parent to path if needed
-            if self.is_src_layout_project():
-                path_parts = os.path.normpath(self.parent_path_str).split(os.sep)
-                if "src" in path_parts:
-                    src_index = path_parts.index("src")
-                    # The project root should be the directory containing src/
-                    src_project_root = os.sep.join(path_parts[:src_index])
-                    self.logger.debug(
-                        f"Adding src project root to sys.path: {src_project_root}"
-                    )
-                    sys.path.insert(0, src_project_root)
+            # Add src project root to sys.path if found
+            if src_root:
+                log_str = f"Adding src project root to sys.path: {src_root}"
+                self.logger.debug(log_str)
+                sys.path.insert(0, str(src_root))
 
             # Look for the module using importlib
             spec = find_spec(module_name)
             if spec and spec.origin:
                 # Filter out compiled modules and non-local modules
                 if spec.origin.endswith(".py"):
-                    module_path = os.path.abspath(spec.origin)
+                    module_path = Path(spec.origin).resolve()
                     # Check if module is in standard library
-                    for stdlib_path in self.stdlib_path_strs:
-                        if module_path.startswith(stdlib_path):
+                    for stdlib_path in self.stdlib_paths:
+                        if module_path.is_relative_to(stdlib_path):
                             return None
                     # Check if module is within project directory or src directory
-                    if self.is_src_layout_project():
-                        # For src-layout, consider modules in the src directory as local
-                        path_parts = os.path.normpath(self.parent_path_str).split(
-                            os.sep
-                        )
-                        if "src" in path_parts:
-                            src_index = path_parts.index("src")
-                            src_project_root = os.sep.join(path_parts[:src_index])
-                            if module_path.startswith(src_project_root):
-                                return module_path
+                    if src_root and module_path.is_relative_to(src_root):
+                        return module_path
                     # Otherwise use the standard project_root check
-                    elif module_path.startswith(self.parent_path_str):
+                    elif module_path.is_relative_to(self.parent_path):
                         return module_path
         except (ImportError, AttributeError):
             pass
@@ -308,7 +305,7 @@ class ImportCrawler:
         markers like src/ directory and pyproject.toml
         """
         # Get the directory containing the file
-        path_parts = os.path.normpath(self.parent_path_str).split(os.sep)
+        path_parts: tuple[str, ...] = self.parent_path.parts
 
         # Look for src/ in the path
         if "src" not in path_parts:
@@ -318,11 +315,11 @@ class ImportCrawler:
         src_index = path_parts.index("src")
 
         # The project root should be the directory containing src/
-        potential_project_root = os.sep.join(path_parts[:src_index])
+        potential_project_root = Path(*path_parts[:src_index])
 
         # Check for project configuration files
         for config_file in ["pyproject.toml", "setup.py", "setup.cfg"]:
-            if os.path.exists(os.path.join(potential_project_root, config_file)):
+            if (potential_project_root / config_file).exists():
                 return True
 
         return False
