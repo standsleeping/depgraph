@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Dict, Any
 from depgraph.cli.parse_args import parse_args
 from depgraph.logger.setup_logger import setup_logger
@@ -10,7 +11,7 @@ from depgraph.data.scope_info import ScopeInfo
 from depgraph.data.scope_name import ScopeName
 from depgraph.processors.process_scope import process_scope
 from depgraph.import_crawler.crawl import crawl
-
+from depgraph.tools.convert_to_abs_path import convert_to_abs_path
 
 def run_analysis() -> None:
     (
@@ -37,7 +38,11 @@ def run_analysis() -> None:
         logger.debug(f"  output_file: {output_file}")
         logger.debug(f"  output_format: {output_format}")
 
-    logger.info(f"Analyzing file '{file_path}'")
+    logger.info(f"Converting file path to absolute path: {file_path}")
+
+    abs_file_path: Path = convert_to_abs_path(file_path)
+
+    logger.info(f"Analyzing file '{abs_file_path}'")
 
     file_analysis: FileAnalysis = process_file(file_path=file_path, depth=depth)
 
