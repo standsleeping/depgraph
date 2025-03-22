@@ -208,7 +208,7 @@ def test_import_resolution_in_src_layout(sample_src_project):
     crawler = ImportCrawler(main_file)
 
     # Build the graph with our file
-    crawler.build_graph(main_file, str(main_file))
+    crawler.build_graph(main_file)
 
     # Check that the graph contains the dependency
     main_file_str = str(main_file)
@@ -230,7 +230,7 @@ def test_complete_dependency_graph(sample_src_project):
     crawler = ImportCrawler(main_file)
 
     # Build the graph
-    crawler.build_graph(main_file, str(main_file))
+    crawler.build_graph(main_file)
 
     # Check that both files are in the graph
     main_file_str = str(main_file)
@@ -252,7 +252,7 @@ def test_complex_import_resolution(complex_src_project):
 
     # Initialize the crawler and build the dependency graph
     crawler = ImportCrawler(main_file)
-    crawler.build_graph(main_file, str(main_file))
+    crawler.build_graph(main_file)
 
     # Expected files that should be imported by main.py
     expected_imports = [
@@ -298,7 +298,7 @@ def test_transitive_dependencies(complex_src_project):
 
     # Initialize the crawler and build the dependency graph
     crawler = ImportCrawler(main_file)
-    crawler.build_graph(main_file, str(main_file))
+    crawler.build_graph(main_file)
 
     # Check if there's a transitive dependency from main to common
     assert crawler.graph.has_transitive_dependency(str(main_file), str(common_file))
@@ -339,7 +339,7 @@ def test_circular_dependencies(complex_src_project):
 
     # Initialize the crawler and build the dependency graph
     crawler = ImportCrawler(module_a_file)
-    crawler.build_graph(module_a_file, str(module_a_file))
+    crawler.build_graph(module_a_file)
 
     # Check that both modules import each other (circular dependency)
     module_a_str = str(module_a_file)

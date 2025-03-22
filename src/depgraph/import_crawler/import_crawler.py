@@ -84,9 +84,7 @@ class ImportCrawler:
     def unresolved_third_party_imports(self) -> set[str]:
         return self.import_categorizer.third_party_imports
 
-    def build_graph(
-        self, file_path: Optional[Path] = None, old_file_path_str: Optional[str] = None
-    ) -> DependencyGraph:
+    def build_graph(self, file_path: Optional[Path] = None) -> DependencyGraph:
         """
         Recursively builds the import graph.
         If no file path is provided, uses the root file.
@@ -94,18 +92,13 @@ class ImportCrawler:
 
         Args:
             file_path: The absolute path to the file to crawl
-            old_file_path_str: The old file path string (for backwards compatibility)
 
         Returns:
             The dependency graph
         """
 
-        if old_file_path_str is not None:
-            file_path = Path(old_file_path_str)
-        elif file_path is None:
+        if file_path is None:
             file_path = self.root_file_path
-        else:
-            raise ValueError("file_path and old_file_path_str cannot both be None")
 
         if file_path in self.visited_paths or not file_path.suffix == ".py":
             self.logger.debug(f"Skipping file: {file_path.name}")
