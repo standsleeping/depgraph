@@ -1,4 +1,5 @@
 import ast
+from pathlib import Path
 from depgraph.formatters.process_output import process_output
 from depgraph.data.file_analysis import FileAnalysis
 from depgraph.data.scope_info import ScopeInfo
@@ -49,7 +50,7 @@ def test_process_output_basic():
 
     # Create file analysis
     analysis = FileAnalysis(
-        file_path="test.py",
+        abs_file_path=Path("test.py"),
         scopes={
             ScopeName("<module>"): module_scope,
             ScopeName("<module>.TestClass"): class_scope,
@@ -117,7 +118,7 @@ def test_process_output_with_filter():
 
     # Create file analysis
     analysis = FileAnalysis(
-        file_path="test.py",
+        abs_file_path=Path("test.py"),
         scopes={
             ScopeName("<module>"): module_scope,
             ScopeName("<module>.TestClass"): class_scope,
@@ -147,7 +148,7 @@ def test_process_output_with_invalid_filter():
 
     # Create file analysis
     analysis = FileAnalysis(
-        file_path="test.py",
+        abs_file_path=Path("test.py"),
         scopes={
             ScopeName("<module>"): module_scope,
         },
@@ -208,7 +209,7 @@ def test_process_output_with_assignments():
 
     # Create file analysis
     analysis = FileAnalysis(
-        file_path="test.py",
+        abs_file_path=Path("test.py"),
         scopes={
             ScopeName("<module>"): ScopeInfo(
                 name=ScopeName("<module>"), node=module_node, type="module"

@@ -44,7 +44,7 @@ def run_analysis() -> None:
 
     logger.info(f"Analyzing file '{abs_file_path}'")
 
-    file_analysis: FileAnalysis = process_file(file_path=file_path, depth=depth)
+    file_analysis: FileAnalysis = process_file(abs_file_path=abs_file_path, depth=depth)
 
     module_scope_info: ScopeInfo
     if scope_filter:

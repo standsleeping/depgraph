@@ -1,10 +1,11 @@
 import ast
+from pathlib import Path
 from depgraph.tools import parse_file
 from depgraph.visitors import ScopeVisitor
 from depgraph.data.file_analysis import FileAnalysis
 
 
-def process_file(file_path: str, depth: int) -> FileAnalysis:
+def process_file(abs_file_path: Path, depth: int) -> FileAnalysis:
     """
     Analyze a Python file by parsing it into an AST and identifying scopes.
 
@@ -16,7 +17,7 @@ def process_file(file_path: str, depth: int) -> FileAnalysis:
         FileAnalysis object containing the complete analysis results,
         including all scopes and their relationships
     """
-    ast_tree: ast.Module = parse_file(file_path)
+    ast_tree: ast.Module = parse_file(abs_file_path)
     visitor = ScopeVisitor()
     visitor.visit(ast_tree)
-    return FileAnalysis(file_path=file_path, scopes=visitor.scopes, ast_tree=ast_tree)
+    return FileAnalysis(abs_file_path=abs_file_path, scopes=visitor.scopes, ast_tree=ast_tree)

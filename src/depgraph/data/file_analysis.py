@@ -1,4 +1,5 @@
 import ast
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Dict, Optional
 from depgraph.data.scope_info import ScopeInfo
@@ -10,12 +11,12 @@ class FileAnalysis:
     """Contains the analysis results for a Python source file.
 
     Attributes:
-        file_path: The path to the analyzed file
+        abs_file_path: The path to the analyzed file
         scopes: Dictionary mapping scope names to their ScopeInfo
         ast_tree: AST of the analyzed file
     """
 
-    file_path: str
+    abs_file_path: Path
     scopes: Dict[ScopeName, ScopeInfo]
     ast_tree: ast.Module
 
