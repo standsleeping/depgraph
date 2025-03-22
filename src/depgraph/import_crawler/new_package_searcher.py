@@ -1,30 +1,30 @@
-import os
 import logging
+from pathlib import Path
 from typing import Optional, List
 from depgraph.logger.setup_logger import setup_logger
-from pathlib import Path
 
-def get_ancestor_paths(start_dir: str, outer_root: str) -> List[str]:
+
+def get_ancestor_paths(start_dir: Path, outer_root: Path) -> List[Path]:
     """Returns a list of all ancestor directory paths from start_dir up to outer_root."""
     paths = []
-    current = os.path.abspath(start_dir)
-    outer_root = os.path.abspath(outer_root)
+    current = start_dir.resolve()
+    outer_root = outer_root.resolve()
 
     while True:
         paths.append(current)
-        if current == outer_root or len(current) < len(outer_root):
+        if current == outer_root or len(str(current)) < len(str(outer_root)):
             break
-        current = os.path.dirname(current)
+        current = current.parent
 
     return paths
 
 
-def find_module_in_package_hierarchy(
+def new_find_module_in_package_hierarchy(
     module_name: str,
     start_dir: Path | str,
     outer_root: Path | str,
     logger: Optional[logging.Logger] = None,
-) -> Optional[str]:
+) -> Optional[Path]:
     """
     Searches for a module through the package hierarchy by checking each ancestor directory.
 
@@ -34,30 +34,30 @@ def find_module_in_package_hierarchy(
         outer_root: Outermost package root directory
         logger: Optional logger instance
     """
-
-    # ensure start_dir and outer_root are strs
-    start_dir = str(start_dir)
-    outer_root = str(outer_root)
-
     if logger is None:
         logger = setup_logger()
 
-    logger.debug(f"Searching for {module_name} from {start_dir} up to {outer_root}")
+    start_path = Path(start_dir)
+    outer_root_path = Path(outer_root)
+
+    logger.debug(
+        f"Searching for {module_name} from {start_path} up to {outer_root_path}"
+    )
 
     # Get all possible directory paths to search
-    search_paths = get_ancestor_paths(start_dir, outer_root)
+    search_paths = get_ancestor_paths(start_path, outer_root_path)
 
     # For each path, try to find the module
     for path in search_paths:
         # Try as a direct .py file
-        module_file = os.path.join(path, module_name + ".py")
-        if os.path.isfile(module_file):
+        module_file = path / f"{module_name}.py"
+        if module_file.is_file():
             logger.debug(f"Found module file: {module_file}")
             return module_file
 
         # Try as a package
-        package_init = os.path.join(path, module_name, "__init__.py")
-        if os.path.isfile(package_init):
+        package_init = path / module_name / "__init__.py"
+        if package_init.is_file():
             logger.debug(f"Found package: {package_init}")
             return package_init
 
@@ -66,10 +66,10 @@ def find_module_in_package_hierarchy(
             module_parts = module_name.split(".")
             # Try each possible combination of dots vs directories
             for i in range(len(module_parts)):
-                file_part = ".".join(module_parts[i:]) + ".py"
-                dir_part = os.path.join(*module_parts[:i]) if i > 0 else ""
-                full_path = os.path.join(path, dir_part, file_part)
-                if os.path.isfile(full_path):
+                file_part = f"{'.'.join(module_parts[i:])}.py"
+                dir_part = Path(*module_parts[:i]) if i > 0 else Path(".")
+                full_path = path / dir_part / file_part
+                if full_path.is_file():
                     logger.debug(f"Found dotted module: {full_path}")
                     return full_path
 

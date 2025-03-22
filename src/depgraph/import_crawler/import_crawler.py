@@ -10,6 +10,7 @@ from .module_info import ModuleInfo
 from depgraph.logger.setup_logger import setup_logger
 from .package_finder import find_outermost_package_root
 from .package_searcher import find_module_in_package_hierarchy
+from .new_package_searcher import new_find_module_in_package_hierarchy
 from .dependency_graph import DependencyGraph
 from .site_packages import find_project_site_packages
 from .import_categorizer import ImportCategorizer
@@ -145,7 +146,7 @@ class ImportCrawler:
                     self.resolve_import(
                         alias_name,
                         str(file_path),
-                        str(module_dir),
+                        module_dir,
                     )
             elif isinstance(node, ast.ImportFrom):
                 if isinstance(node.module, str):
@@ -154,15 +155,17 @@ class ImportCrawler:
                         self.resolve_import(
                             module_name,
                             str(file_path),
-                            str(module_dir),
+                            module_dir,
                         )
 
     def resolve_import(
-        self, module_name_str: str, current_file_str: str, search_dir_str: str
+        self, module_name_str: str, current_file_str: str, search_dir: Path
     ) -> None:
         """Resolves the module path and updates the graph."""
         self.logger.debug(f"Resolving import {module_name_str} from {current_file_str}")
-        module_path = self.find_module(module_name_str, search_dir_str)
+
+        module_path = self.find_module(module_name_str, search_dir)  # TODO: FRAME 0
+
         if module_path:
             current = ModuleInfo(current_file_str)
             module = ModuleInfo(module_path)
@@ -176,7 +179,7 @@ class ImportCrawler:
         """Categorize an unresolved import using the ImportCategorizer."""
         self.import_categorizer.categorize_import(module_name)
 
-    def find_module(self, module_name: str, search_dir: str) -> Optional[str]:
+    def find_module(self, module_name: str, search_dir: Path) -> Optional[Path]:
         """
         Attempts to find the module file given its name by:
         1. Searching through the package hierarchy from current directory
@@ -184,10 +187,17 @@ class ImportCrawler:
         3. If not found locally, try finding through sys.path
         """
         # First try searching through package hierarchy
-        outer_root = find_outermost_package_root(search_dir, self.logger)
+        outer_root: Path = find_outermost_package_root(search_dir, self.logger)
         module_path = find_module_in_package_hierarchy(
             module_name, search_dir, outer_root, self.logger
+        )  # TODO: FRAME 1
+
+        new_module_path = new_find_module_in_package_hierarchy(
+            module_name, search_dir, outer_root, self.logger
         )
+
+        assert str(module_path) == str(new_module_path)
+
         if module_path:
             return module_path
 
