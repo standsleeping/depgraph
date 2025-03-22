@@ -63,7 +63,7 @@ def run_analysis() -> None:
     )
 
     graph, unresolved_imports = crawl(
-        file_path=file_path,
+        abs_file_path=abs_file_path,
         logger=logger,
     )
 
