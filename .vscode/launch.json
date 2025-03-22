@@ -7,7 +7,7 @@
       "request": "launch",
       "module": "depgraph",
       "args": [
-        "./depgraph/process_file.py",
+        "./src/depgraph/processors/process_file.py",
         "--log-level",
         "DEBUG",
         "--depth",
