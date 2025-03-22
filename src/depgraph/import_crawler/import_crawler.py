@@ -202,8 +202,7 @@ class ImportCrawler:
                 f"Detected src-layout project, trying alternative resolution for {module_name}"
             )
             # Find the src directory in the path
-            file_dir = os.path.dirname(self.root_file)
-            path_parts = os.path.normpath(file_dir).split(os.sep)
+            path_parts = os.path.normpath(self.parent_path_str).split(os.sep)
             if "src" in path_parts:
                 src_index = path_parts.index("src")
                 # The project root should be the directory containing src/
@@ -256,8 +255,7 @@ class ImportCrawler:
         try:
             # Check if we're in a src-layout project and add the src parent to path if needed
             if self.is_src_layout_project():
-                file_dir = os.path.dirname(self.root_file)
-                path_parts = os.path.normpath(file_dir).split(os.sep)
+                path_parts = os.path.normpath(self.parent_path_str).split(os.sep)
                 if "src" in path_parts:
                     src_index = path_parts.index("src")
                     # The project root should be the directory containing src/
@@ -280,8 +278,7 @@ class ImportCrawler:
                     # Check if module is within project directory or src directory
                     if self.is_src_layout_project():
                         # For src-layout, consider modules in the src directory as local
-                        file_dir = os.path.dirname(self.root_file)
-                        path_parts = os.path.normpath(file_dir).split(os.sep)
+                        path_parts = os.path.normpath(self.parent_path_str).split(os.sep)
                         if "src" in path_parts:
                             src_index = path_parts.index("src")
                             src_project_root = os.sep.join(path_parts[:src_index])
@@ -308,10 +305,9 @@ class ImportCrawler:
         markers like src/ directory and pyproject.toml
         """
         # Get the directory containing the file
-        file_dir = os.path.dirname(self.root_file)
+        path_parts = os.path.normpath(self.parent_path_str).split(os.sep)
 
         # Look for src/ in the path
-        path_parts = os.path.normpath(file_dir).split(os.sep)
         if "src" not in path_parts:
             return False
 
