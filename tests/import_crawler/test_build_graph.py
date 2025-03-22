@@ -197,11 +197,11 @@ def test_find_module_with_package_expansion(nested_package_structure):
     crawler = ImportCrawler(deep_module)
 
     # Try to find utils.py from the deep module directory
-    search_dir = str(nested_package_structure / "root_pkg/subpkg/deep")
+    search_dir = nested_package_structure / "root_pkg/subpkg/deep"
     module_path = crawler.find_module("utils", search_dir)
 
     assert module_path is not None
-    assert module_path == str(nested_package_structure / "root_pkg/utils.py")
+    assert module_path == nested_package_structure / "root_pkg/utils.py"
 
 
 def test_find_module_no_expansion_needed(nested_package_structure):
@@ -210,11 +210,11 @@ def test_find_module_no_expansion_needed(nested_package_structure):
     crawler = ImportCrawler(root_init)
 
     # Try to find utils.py from the root package directory
-    search_dir = str(nested_package_structure / "root_pkg")
+    search_dir = nested_package_structure / "root_pkg"
     module_path = crawler.find_module("utils", search_dir)
 
     assert module_path is not None
-    assert module_path == str(nested_package_structure / "root_pkg/utils.py")
+    assert module_path == nested_package_structure / "root_pkg/utils.py"
 
 
 def test_find_module_expansion_fails(nested_package_structure):
@@ -223,7 +223,7 @@ def test_find_module_expansion_fails(nested_package_structure):
     crawler = ImportCrawler(deep_module)
 
     # Try to find a non-existent module
-    search_dir = str(nested_package_structure / "root_pkg/subpkg/deep")
+    search_dir = nested_package_structure / "root_pkg/subpkg/deep"
     module_path = crawler.find_module("nonexistent", search_dir)
 
     assert module_path is None
@@ -241,7 +241,7 @@ def test_find_module_respects_project_root(nested_package_structure, tmp_path):
     crawler = ImportCrawler(deep_module)
 
     # Try to find the external module from inside the project root
-    search_dir = str(nested_package_structure / "root_pkg")
+    search_dir = nested_package_structure / "root_pkg"
     module_path = crawler.find_module("external", search_dir)
 
     assert module_path is None

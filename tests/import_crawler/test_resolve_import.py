@@ -66,7 +66,7 @@ def test_resolve_recursive_imports(crawler, tmp_path):
         crawler.resolve_import("module1", current_file, tmp_path)
 
         # Should call build_graph on module1
-        mock_build.assert_called_once_with(None, module1)
+        mock_build.assert_called_once_with(module1)
 
 
 def test_resolve_duplicate_imports(crawler, tmp_path):
@@ -127,7 +127,7 @@ def test_resolve_import_circular_reference(crawler, tmp_path):
         crawler.resolve_import("module1", module2, tmp_path)
 
         # Should only call build_graph once for module1
-        mock_build.assert_called_once_with(None, module1)
+        mock_build.assert_called_once_with(module1)
 
 
 def test_categorize_unresolved_imports(crawler, tmp_path):

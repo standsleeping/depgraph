@@ -12,7 +12,7 @@ def test_find_local_module_in_syspath(crawler, tmp_path):
 
     with patch.object(sys, "path", [str(module_dir)] + sys.path):
         result = crawler.find_module_in_syspath("test_module")
-        assert result == str(module_file)
+        assert result == module_file
 
 
 def test_nonexistent_module(crawler):
