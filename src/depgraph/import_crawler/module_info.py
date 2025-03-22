@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -23,3 +23,11 @@ class ModuleInfo:
 
     def __repr__(self) -> str:
         return f"ModuleInfo(full_path={self.full_path})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ModuleInfo):
+            return False
+        return str(self.full_path) == str(other.full_path)
+
+    def __hash__(self) -> int:
+        return hash(self.full_path)

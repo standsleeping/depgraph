@@ -188,25 +188,10 @@ class ImportCrawler:
         """
         # First try searching through package hierarchy
         outer_root: Path = find_outermost_package_root(search_dir, self.logger)
-        module_path = find_module_in_package_hierarchy(
+
+        module_path: Path | None = new_find_module_in_package_hierarchy(
             module_name, search_dir, outer_root, self.logger
-        )  # TODO: FRAME 1
-
-        new_module_path = new_find_module_in_package_hierarchy(
-            module_name, search_dir, outer_root, self.logger
-        )
-
-        # Debug info to compare paths
-        if str(module_path) != str(new_module_path):
-            self.logger.error(f"Path mismatch for {module_name}:")
-            self.logger.error(
-                f"Old path: '{module_path}' (type: {type(module_path).__name__})"
-            )
-            self.logger.error(
-                f"New path: '{new_module_path}' (type: {type(new_module_path).__name__})"
-            )
-
-        assert str(module_path) == str(new_module_path)
+        ) # TODO: FRAME 1
 
         if module_path:
             return module_path
