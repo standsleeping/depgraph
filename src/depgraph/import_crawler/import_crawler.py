@@ -190,8 +190,11 @@ class ImportCrawler:
         outer_root: Path = find_outermost_package_root(search_dir, self.logger)
 
         module_path: Path | None = new_find_module_in_package_hierarchy(
-            module_name, search_dir, outer_root, self.logger
-        ) # TODO: FRAME 1
+            module_name,
+            search_dir,
+            outer_root,
+            self.logger,
+        )
 
         if module_path:
             return module_path
@@ -202,42 +205,40 @@ class ImportCrawler:
                 f"Detected src-layout project, trying alternative resolution for {module_name}"
             )
             # Find the src directory in the path
-            path_parts = os.path.normpath(self.parent_path_str).split(os.sep)
+            path_parts: tuple[str, ...] = self.parent_path.parts
             if "src" in path_parts:
                 src_index = path_parts.index("src")
                 # The project root should be the directory containing src/
-                src_project_root = os.sep.join(path_parts[:src_index])
+                src_project_root = Path(*path_parts[:src_index])
 
                 # Try to resolve absolute imports through the src directory
                 if module_name.count(".") > 0:
                     # Split the module name into package and submodule parts
                     parts = module_name.split(".")
                     # Try reconstructing the path based on src-layout conventions
-                    possible_paths = []
+                    possible_paths: list[Path] = []
 
                     # Try as a direct path from src directory
-                    src_path = os.path.join(src_project_root, "src")
-                    package_path = os.path.join(src_path, *parts)
-                    possible_paths.append(package_path + ".py")
-                    possible_paths.append(os.path.join(package_path, "__init__.py"))
+                    src_path = src_project_root / "src"
+                    package_path = src_path.joinpath(*parts)
+                    possible_paths.append(package_path.with_suffix('.py'))
+                    possible_paths.append(package_path / "__init__.py")
 
                     # Try with src/parts[0]/parts[1:] structure
                     if len(parts) > 1:
-                        package_path = os.path.join(src_path, parts[0])
-                        submodule_path = os.path.join(package_path, *parts[1:])
-                        possible_paths.append(submodule_path + ".py")
-                        possible_paths.append(
-                            os.path.join(submodule_path, "__init__.py")
-                        )
+                        package_path = src_path / parts[0]
+                        submodule_path = package_path.joinpath(*parts[1:])
+                        possible_paths.append(submodule_path.with_suffix('.py'))
+                        possible_paths.append(submodule_path / "__init__.py")
 
                     # Check all possible paths
                     for path in possible_paths:
-                        if os.path.exists(path):
+                        if path.exists():
                             self.logger.debug(f"Found module in src-layout: {path}")
                             return path
 
         # If not found locally, try finding through sys.path
-        module_path = self.find_module_in_syspath(module_name)
+        module_path = self.find_module_in_syspath(module_name)  # TODO: FRAME 1
         if module_path:
             return module_path
 
@@ -278,7 +279,9 @@ class ImportCrawler:
                     # Check if module is within project directory or src directory
                     if self.is_src_layout_project():
                         # For src-layout, consider modules in the src directory as local
-                        path_parts = os.path.normpath(self.parent_path_str).split(os.sep)
+                        path_parts = os.path.normpath(self.parent_path_str).split(
+                            os.sep
+                        )
                         if "src" in path_parts:
                             src_index = path_parts.index("src")
                             src_project_root = os.sep.join(path_parts[:src_index])
