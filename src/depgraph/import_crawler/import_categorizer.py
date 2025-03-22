@@ -18,16 +18,21 @@ class ImportCategorizer:
     def categorize_import(self, module_name: str) -> None:
         """Categorize an import into system, third-party, or local."""
         try:
+            # The find_spec function returns a spec (ModuleSpec object), which has an origin attribute.
+            # The origin attribute is a string that describes the origin of the module.
+            # For file-based modules, the origin is the path to the module.
+            # For built-in and frozen modules, the origin is "built-in" or "frozen".
             spec = find_spec(module_name)
             if spec and spec.origin:
-                is_builtin = spec.origin == "built-in" or spec.origin == "frozen"
-                is_stdlib = any(spec.origin.startswith(p) for p in self.stdlib_paths)
+                origin_str: str = spec.origin
+                is_builtin = origin_str == "built-in" or origin_str == "frozen"
+                is_stdlib = any(origin_str.startswith(p) for p in self.stdlib_paths)
                 if is_builtin or is_stdlib:
                     self.system_imports.add(module_name)
                     return
 
                 # Check if it's in site-packages
-                module_path = Path(spec.origin).resolve()
+                module_path = Path(origin_str).resolve()
                 is_third_party = any(
                     str(module_path).startswith(str(site_pkg))
                     for site_pkg in self.site_packages_paths

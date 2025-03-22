@@ -26,7 +26,6 @@ class ImportCrawler:
     NOTES:
     - self.root_file (str) is deprecated. Replace with self.root_file_path (Path).
     - self.project_root (str) is deprecated. The Path-appropriate version is self.project_root_path (Path).
-    - self.stdlib_path_strs (set[str]) is deprecated. Replace with self.stdlib_path_objs (set[Path]).
     - (More deprecated items to come)
     """
 
@@ -54,11 +53,8 @@ class ImportCrawler:
         # Get standard library paths
         paths: Dict[str, str] = sysconfig.get_paths()
 
-        # Old str-based version, a set of strings:
-        self.stdlib_path_strs = set([os.path.abspath(p) for p in paths.values()])
-
-        # New path-based version, a set of Path objects:
-        self.stdlib_path_objs = set([Path(p) for p in paths.values()])
+        # We use strings here because this data is always used with importlib.util.find_spec.
+        self.stdlib_path_strs = set([p for p in paths.values()])
 
         # Get site-packages paths for the project being analyzed
         self.site_packages_paths: set[Path] = find_project_site_packages(
