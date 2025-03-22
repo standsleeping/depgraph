@@ -3,6 +3,7 @@ import os
 import sys
 import logging
 import sysconfig
+from pathlib import Path
 from importlib.util import find_spec
 from typing import Optional, Dict, List
 from .module_info import ModuleInfo
@@ -15,8 +16,9 @@ from .import_categorizer import ImportCategorizer
 
 
 class ImportCrawler:
-    def __init__(self, root_file: str, logger: logging.Logger | None = None) -> None:
-        self.root_file = os.path.abspath(root_file)
+    def __init__(self, abs_file_path: Path, logger: logging.Logger | None = None) -> None:
+        self.abs_file_path = abs_file_path
+        self.root_file = str(abs_file_path)
         self.project_root = os.path.dirname(self.root_file)
         self.visited: set[str] = set()
         self.graph = DependencyGraph()
