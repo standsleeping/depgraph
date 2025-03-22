@@ -26,7 +26,7 @@ class ImportCrawler:
 
     NOTES:
     - self.root_file (str) is deprecated. Replace with self.root_file_path (Path).
-    - self.project_root (str) is deprecated. The Path-appropriate version is self.project_root_path (Path).
+    - self.parent_path_str (str) is deprecated. The Path-appropriate version is self.parent_path (Path).
     - (More deprecated items to come)
     """
 
@@ -35,8 +35,8 @@ class ImportCrawler:
     ) -> None:
         self.root_file = str(abs_file_path)
         self.root_file_path = abs_file_path
-        self.project_root = os.path.dirname(self.root_file)
-        self.project_root_path = abs_file_path.parent
+        self.parent_path_str = os.path.dirname(self.root_file)
+        self.parent_path = abs_file_path.parent
         self.visited: set[str] = set()
         self.visited_paths: set[Path] = set()
         self.graph = DependencyGraph()
@@ -59,7 +59,7 @@ class ImportCrawler:
 
         # Get site-packages paths for the project being analyzed
         self.site_packages_paths: set[Path] = find_project_site_packages(
-            self.project_root,
+            self.parent_path_str,
             self.logger,
         )
 
@@ -288,7 +288,7 @@ class ImportCrawler:
                             if module_path.startswith(src_project_root):
                                 return module_path
                     # Otherwise use the standard project_root check
-                    elif module_path.startswith(self.project_root):
+                    elif module_path.startswith(self.parent_path_str):
                         return module_path
         except (ImportError, AttributeError):
             pass
