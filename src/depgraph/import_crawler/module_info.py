@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from dataclasses import dataclass
 
 
@@ -6,17 +6,17 @@ from dataclasses import dataclass
 class ModuleInfo:
     """Information about a Python module."""
 
-    full_path: str
+    full_path: Path
 
     @property
     def file_name(self) -> str:
         """The module's file name without path."""
-        return os.path.basename(self.full_path)
+        return self.full_path.name
 
     @property
-    def dir_name(self) -> str:
+    def dir_name(self) -> Path:
         """The directory containing this module."""
-        return os.path.dirname(self.full_path)
+        return self.full_path.parent
 
     def __str__(self) -> str:
         return self.file_name

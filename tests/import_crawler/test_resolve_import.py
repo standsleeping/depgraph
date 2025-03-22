@@ -11,10 +11,10 @@ def test_resolve_local_import(crawler, tmp_path):
     current_file = tmp_path / "current.py"
     current_file.touch()
 
-    crawler.resolve_import("local_module", str(current_file), str(tmp_path))
+    crawler.resolve_import("local_module", current_file, tmp_path)
 
-    key = ModuleInfo(str(current_file))
-    value = ModuleInfo(str(local_module))
+    key = ModuleInfo(current_file)
+    value = ModuleInfo(local_module)
 
     assert crawler.graph[key] == {value}
 
@@ -25,10 +25,10 @@ def test_resolve_nonexistent_module(crawler, tmp_path):
     current_file.touch()
 
     # Does not raise any exceptions
-    crawler.resolve_import("nonexistent", str(current_file), str(tmp_path))
+    crawler.resolve_import("nonexistent", current_file, tmp_path)
 
     # Graph does not contain the current file (no import was resolved)
-    assert str(current_file) not in crawler.graph
+    assert current_file not in crawler.graph
 
 
 def test_resolve_multiple_imports(crawler, tmp_path):
@@ -40,12 +40,12 @@ def test_resolve_multiple_imports(crawler, tmp_path):
     current_file = tmp_path / "current.py"
     current_file.touch()
 
-    crawler.resolve_import("module1", str(current_file), str(tmp_path))
-    crawler.resolve_import("module2", str(current_file), str(tmp_path))
+    crawler.resolve_import("module1", current_file, tmp_path)
+    crawler.resolve_import("module2", current_file, tmp_path)
 
-    key = ModuleInfo(str(current_file))
-    value1 = ModuleInfo(str(module1))
-    value2 = ModuleInfo(str(module2))
+    key = ModuleInfo(current_file)
+    value1 = ModuleInfo(module1)
+    value2 = ModuleInfo(module2)
 
     assert crawler.graph[key] == {value1, value2}
 
@@ -63,7 +63,7 @@ def test_resolve_recursive_imports(crawler, tmp_path):
 
     # Mock build_graph to track calls
     with patch.object(crawler, "build_graph") as mock_build:
-        crawler.resolve_import("module1", str(current_file), str(tmp_path))
+        crawler.resolve_import("module1", current_file, tmp_path)
 
         # Should call build_graph on module1
         mock_build.assert_called_once_with(None, module1)
@@ -78,12 +78,12 @@ def test_resolve_duplicate_imports(crawler, tmp_path):
     current_file.touch()
 
     # Resolve import twice
-    crawler.resolve_import("local_module", str(current_file), str(tmp_path))
-    crawler.resolve_import("local_module", str(current_file), str(tmp_path))
+    crawler.resolve_import("local_module", current_file, tmp_path)
+    crawler.resolve_import("local_module", current_file, tmp_path)
 
     # Only appears once in the graph
-    key = ModuleInfo(str(current_file))
-    value = ModuleInfo(str(local_module))
+    key = ModuleInfo(current_file)
+    value = ModuleInfo(local_module)
     assert crawler.graph[key] == {value}
 
 
@@ -99,17 +99,17 @@ def test_resolve_import_updates_existing_set(crawler, tmp_path):
     current_file.touch()
 
     # Manually add existing import
-    key = ModuleInfo(str(current_file))
-    value1 = ModuleInfo(str(module1))
+    key = ModuleInfo(current_file)
+    value1 = ModuleInfo(module1)
     crawler.graph[key] = {value1}
 
     # Resolve another import
-    crawler.resolve_import("module2", str(current_file), str(tmp_path))
+    crawler.resolve_import("module2", current_file, tmp_path)
 
     # Preserves existing import and add new one
-    key = ModuleInfo(str(current_file))
-    value1 = ModuleInfo(str(module1))
-    value2 = ModuleInfo(str(module2))
+    key = ModuleInfo(current_file)
+    value1 = ModuleInfo(module1)
+    value2 = ModuleInfo(module2)
     assert crawler.graph[key] == {value1, value2}
 
 
@@ -124,7 +124,7 @@ def test_resolve_import_circular_reference(crawler, tmp_path):
 
     # Mock build_graph to prevent infinite recursion
     with patch.object(crawler, "build_graph") as mock_build:
-        crawler.resolve_import("module1", str(module2), str(tmp_path))
+        crawler.resolve_import("module1", module2, tmp_path)
 
         # Should only call build_graph once for module1
         mock_build.assert_called_once_with(None, module1)
@@ -136,11 +136,11 @@ def test_categorize_unresolved_imports(crawler, tmp_path):
     current_file.touch()
 
     # System import
-    crawler.resolve_import("sys", str(current_file), str(tmp_path))
+    crawler.resolve_import("sys", current_file, tmp_path)
     assert "sys" in crawler.unresolved_system_imports
 
     # Default to local import
-    crawler.resolve_import("local_module", str(current_file), str(tmp_path))
+    crawler.resolve_import("local_module", current_file, tmp_path)
     assert "local_module" in crawler.unresolved_local_imports
 
 
@@ -150,7 +150,7 @@ def test_categorize_dotted_imports(crawler, tmp_path):
     current_file.touch()
 
     # Test dotted imports (should be local)
-    crawler.resolve_import("package.module", str(current_file), str(tmp_path))
+    crawler.resolve_import("package.module", current_file, tmp_path)
     assert "package.module" in crawler.unresolved_local_imports
 
 
@@ -160,5 +160,5 @@ def test_categorize_private_imports(crawler, tmp_path):
     current_file.touch()
 
     # Test private module import (should be local)
-    crawler.resolve_import("_private_module", str(current_file), str(tmp_path))
+    crawler.resolve_import("_private_module", current_file, tmp_path)
     assert "_private_module" in crawler.unresolved_local_imports

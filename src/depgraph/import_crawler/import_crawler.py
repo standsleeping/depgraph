@@ -147,7 +147,7 @@ class ImportCrawler:
                     alias_name: str = alias.name
                     self.resolve_import(
                         alias_name,
-                        str(file_path),
+                        file_path,
                         module_dir,
                     )
             elif isinstance(node, ast.ImportFrom):
@@ -156,23 +156,25 @@ class ImportCrawler:
                     if module_name:
                         self.resolve_import(
                             module_name,
-                            str(file_path),
+                            file_path,
                             module_dir,
                         )
 
     def resolve_import(
-        self, module_name_str: str, current_file_str: str, search_dir: Path
+        self, module_name_str: str, current_file_path: Path, search_dir: Path
     ) -> None:
         """Resolves the module path and updates the graph."""
-        self.logger.debug(f"Resolving import {module_name_str} from {current_file_str}")
+        self.logger.debug(
+            f"Resolving import {module_name_str} from {current_file_path}"
+        )
 
-        module_path = self.find_module(module_name_str, search_dir)  # TODO: FRAME 0
+        module_path = self.find_module(module_name_str, search_dir)
 
         if module_path:
-            current = ModuleInfo(current_file_str)
+            current = ModuleInfo(current_file_path)
             module = ModuleInfo(module_path)
             self.graph.add_dependency(current, module)
-            self.build_graph(None, module_path)
+            self.build_graph(module_path)
         else:
             self.categorize_unresolved_import(module_name_str)
             self.logger.debug(f"Could not resolve {module_name_str}")
