@@ -20,7 +20,7 @@ def parse_args() -> Tuple[str, int, str, Optional[str], Optional[str], Optional[
 
     parser.add_argument(
         "entry_file",
-        help="Path to the Python file to analyze",
+        help="Relative or absolute path to the Python file to analyze",
         type=str,
     )
 
