@@ -141,30 +141,36 @@ class ImportCrawler:
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    module_name = alias.name
-                    self.resolve_import(module_name, str(file_path), str(module_dir))
+                    alias_name: str = alias.name
+                    self.resolve_import(
+                        alias_name,
+                        str(file_path),
+                        str(module_dir),
+                    )
             elif isinstance(node, ast.ImportFrom):
                 if isinstance(node.module, str):
-                    module_name = node.module
+                    module_name: str = node.module
                     if module_name:
                         self.resolve_import(
-                            module_name, str(file_path), str(module_dir)
+                            module_name,
+                            str(file_path),
+                            str(module_dir),
                         )
 
     def resolve_import(
-        self, module_name: str, current_file: str, search_dir: str
+        self, module_name_str: str, current_file_str: str, search_dir_str: str
     ) -> None:
         """Resolves the module path and updates the graph."""
-        self.logger.debug(f"Resolving import {module_name} from {current_file}")
-        module_path = self.find_module(module_name, search_dir)
+        self.logger.debug(f"Resolving import {module_name_str} from {current_file_str}")
+        module_path = self.find_module(module_name_str, search_dir_str)
         if module_path:
-            current = ModuleInfo(current_file)
+            current = ModuleInfo(current_file_str)
             module = ModuleInfo(module_path)
             self.graph.add_dependency(current, module)
             self.build_graph(None, module_path)
         else:
-            self.categorize_unresolved_import(module_name)
-            self.logger.debug(f"Could not resolve {module_name}")
+            self.categorize_unresolved_import(module_name_str)
+            self.logger.debug(f"Could not resolve {module_name_str}")
 
     def categorize_unresolved_import(self, module_name: str) -> None:
         """Categorize an unresolved import using the ImportCategorizer."""
