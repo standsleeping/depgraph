@@ -1,5 +1,5 @@
-import os
 import pytest
+from pathlib import Path
 from depgraph.import_crawler.site_packages import find_project_site_packages
 from depgraph.logger.setup_logger import setup_logger
 
@@ -16,8 +16,8 @@ def test_finds_venv_site_packages(tmp_path, logger):
     site_packages = venv_dir / "lib" / "python3.8" / "site-packages"
     site_packages.mkdir(parents=True)
 
-    result = find_project_site_packages(str(tmp_path), logger)
-    assert os.path.abspath(str(site_packages)) in result
+    result = find_project_site_packages(tmp_path, logger)
+    assert site_packages.resolve() in result
 
 
 def test_finds_dot_venv_site_packages(tmp_path, logger):
@@ -26,8 +26,8 @@ def test_finds_dot_venv_site_packages(tmp_path, logger):
     site_packages = venv_dir / "lib" / "python3.8" / "site-packages"
     site_packages.mkdir(parents=True)
 
-    result = find_project_site_packages(str(tmp_path), logger)
-    assert os.path.abspath(str(site_packages)) in result
+    result = find_project_site_packages(tmp_path, logger)
+    assert site_packages.resolve() in result
 
 
 def test_stops_at_project_marker_pyproject(tmp_path, logger):
@@ -42,8 +42,8 @@ def test_stops_at_project_marker_pyproject(tmp_path, logger):
     parent_site_packages = parent_venv / "lib" / "python3.8" / "site-packages"
     parent_site_packages.mkdir(parents=True)
 
-    result = find_project_site_packages(str(subdir), logger)
-    assert os.path.abspath(str(parent_site_packages)) not in result
+    result = find_project_site_packages(subdir, logger)
+    assert parent_site_packages.resolve() not in result
 
 
 def test_stops_at_project_marker_requirements(tmp_path, logger):
@@ -52,17 +52,17 @@ def test_stops_at_project_marker_requirements(tmp_path, logger):
     subdir.mkdir()
     (tmp_path / "requirements.txt").touch()
 
-    result = find_project_site_packages(str(subdir), logger)
+    result = find_project_site_packages(subdir, logger)
     assert len(result) > 0  # Should fall back to system site-packages
 
 
 def test_fallback_to_system_site_packages(tmp_path, logger):
     """Falls back to system site-packages when no venv found."""
-    result = find_project_site_packages(str(tmp_path), logger)
+    result = find_project_site_packages(tmp_path, logger)
 
     # Should find at least one system site-packages directory
     assert len(result) > 0
-    assert all("site-packages" in p for p in result)
+    assert all("site-packages" in str(p) for p in result)
 
 
 def test_multiple_python_versions_in_venv(tmp_path, logger):
@@ -76,9 +76,9 @@ def test_multiple_python_versions_in_venv(tmp_path, logger):
     py38.mkdir(parents=True)
     py39.mkdir(parents=True)
 
-    result = find_project_site_packages(str(tmp_path), logger)
-    assert os.path.abspath(str(py38)) in result
-    assert os.path.abspath(str(py39)) in result
+    result = find_project_site_packages(tmp_path, logger)
+    assert py38.resolve() in result
+    assert py39.resolve() in result
 
 
 def test_finds_venv_in_project_root(tmp_path, logger):
@@ -95,5 +95,5 @@ def test_finds_venv_in_project_root(tmp_path, logger):
     # Create a marker file to indicate project root
     (project_root / "pyproject.toml").touch()
 
-    result = find_project_site_packages(str(project_root), logger)
-    assert os.path.abspath(str(site_packages)) in result
+    result = find_project_site_packages(project_root, logger)
+    assert site_packages.resolve() in result
