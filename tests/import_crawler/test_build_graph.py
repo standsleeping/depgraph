@@ -10,8 +10,8 @@ def test_build_graph_single_file(crawler, tmp_path):
     test_file.write_text("x = 1\ny = 2\n")
 
     crawler.build_graph(test_file)
-    assert str(test_file) in crawler.visited
-    assert str(test_file) not in crawler.graph
+    assert test_file in crawler.visited_paths
+    assert test_file not in crawler.graph
 
 
 def test_build_graph_with_imports(crawler, tmp_path):
@@ -32,7 +32,7 @@ def test_build_graph_with_imports(crawler, tmp_path):
 
     crawler.build_graph(main_file)
 
-    assert str(main_file) in crawler.visited
+    assert main_file in crawler.visited_paths
     key = ModuleInfo(main_file)
     value1 = ModuleInfo(module1)
     value2 = ModuleInfo(module2)
@@ -53,10 +53,10 @@ def test_build_graph_nested_imports(crawler, tmp_path):
 
     crawler.build_graph(main_file)
 
-    assert str(main_file) in crawler.visited
-    assert str(module1) in crawler.visited
-    assert str(module2) in crawler.visited
-    assert str(module3) in crawler.visited
+    assert main_file in crawler.visited_paths
+    assert module1 in crawler.visited_paths
+    assert module2 in crawler.visited_paths
+    assert module3 in crawler.visited_paths
 
     key = ModuleInfo(main_file)
     value1 = ModuleInfo(module1)
@@ -81,8 +81,8 @@ def test_build_graph_circular_imports(crawler, tmp_path):
 
     crawler.build_graph(module1)
 
-    assert str(module1) in crawler.visited
-    assert str(module2) in crawler.visited
+    assert module1 in crawler.visited_paths
+    assert module2 in crawler.visited_paths
 
     key = ModuleInfo(module1)
     value2 = ModuleInfo(module2)
@@ -109,8 +109,8 @@ def test_build_graph_package_imports(crawler, tmp_path):
 
     crawler.build_graph(main_file)
 
-    assert str(main_file) in crawler.visited
-    assert str(init_file) in crawler.visited
+    assert main_file in crawler.visited_paths
+    assert init_file in crawler.visited_paths
     key = ModuleInfo(main_file)
     value = ModuleInfo(init_file)
     assert crawler.graph[key] == {value}
@@ -123,8 +123,8 @@ def test_build_graph_nonexistent_import(crawler, tmp_path):
 
     crawler.build_graph(main_file)
 
-    assert str(main_file) in crawler.visited
-    assert str(main_file) not in crawler.graph
+    assert main_file in crawler.visited_paths
+    assert main_file not in crawler.graph
 
 
 def test_build_graph_syntax_error(crawler, tmp_path):
@@ -134,8 +134,8 @@ def test_build_graph_syntax_error(crawler, tmp_path):
 
     crawler.build_graph(main_file)
 
-    assert str(main_file) in crawler.visited
-    assert str(main_file) not in crawler.graph
+    assert main_file in crawler.visited_paths
+    assert main_file not in crawler.graph
 
 
 def test_build_graph_already_visited(crawler, tmp_path):
@@ -143,10 +143,10 @@ def test_build_graph_already_visited(crawler, tmp_path):
     test_file = tmp_path / "test.py"
     test_file.write_text("x = 1")
 
-    crawler.visited.add(str(test_file))
+    crawler.visited_paths.add(test_file)
 
     crawler.build_graph(test_file)
-    assert str(test_file) not in crawler.graph
+    assert test_file not in crawler.graph
 
 
 def test_build_graph_non_py_file(crawler, tmp_path):
@@ -156,8 +156,8 @@ def test_build_graph_non_py_file(crawler, tmp_path):
 
     crawler.build_graph(test_file)
 
-    assert str(test_file) not in crawler.visited
-    assert str(test_file) not in crawler.graph
+    assert test_file not in crawler.visited_paths
+    assert test_file not in crawler.graph
 
 
 @pytest.fixture

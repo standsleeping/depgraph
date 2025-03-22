@@ -28,7 +28,6 @@ class ImportCrawler:
     ) -> None:
         self.root_file_path = abs_file_path
         self.parent_path = abs_file_path.parent
-        self.visited: set[str] = set()
         self.visited_paths: set[Path] = set()
         self.graph = DependencyGraph()
 
@@ -98,7 +97,6 @@ class ImportCrawler:
         self.logger.info(f"Building graph for {file_path.name}")
 
         self.visited_paths.add(file_path)
-        self.visited.add(str(file_path))  # TODO: Remove this
 
         tree = self.parse_file(file_path)
 
