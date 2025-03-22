@@ -81,34 +81,51 @@ class ImportCrawler:
     def unresolved_third_party_imports(self) -> set[str]:
         return self.import_categorizer.third_party_imports
 
-    def build_graph(self, file_path: Optional[str] = None) -> DependencyGraph:
+    def build_graph(
+        self, file_path: Optional[Path] = None, old_file_path_str: Optional[str] = None
+    ) -> DependencyGraph:
         """
         Recursively builds the import graph.
         If no file path is provided, uses the root file.
         Returns the dependency graph for convenience.
-        """
-        if file_path is None:
-            file_path = self.root_file
 
-        file_path = os.path.abspath(file_path)
-        if file_path in self.visited or not file_path.endswith(".py"):
-            self.logger.debug(f"Skipping file: {os.path.basename(file_path)}")
+        Args:
+            file_path: The absolute path to the file to crawl
+            old_file_path_str: The old file path string (for backwards compatibility)
+
+        Returns:
+            The dependency graph
+        """
+
+        if old_file_path_str is not None:
+            file_path = Path(old_file_path_str)
+        elif file_path is None:
+            file_path = self.root_file_path
+        else:
+            raise ValueError("file_path and old_file_path_str cannot both be None")
+
+        if file_path in self.visited_paths or not file_path.suffix == ".py":
+            self.logger.debug(f"Skipping file: {file_path.name}")
             return self.graph
 
-        self.logger.info(f"Building graph for {os.path.basename(file_path)}")
-        self.visited.add(file_path)
+        self.logger.info(f"Building graph for {file_path.name}")
+
+        self.visited_paths.add(file_path)
+        self.visited.add(str(file_path))  # TODO: Remove this
 
         tree = self.parse_file(file_path)
+
         if tree is None:
-            self.logger.warning(f"Failed to parse {os.path.basename(file_path)}")
+            self.logger.warning(f"Failed to parse {file_path.name}")
             return self.graph
 
-        module_dir = os.path.dirname(file_path)
+        module_dir = file_path.parent
+
         self.process_imports(tree, file_path, module_dir)
 
         return self.graph
 
-    def parse_file(self, file_path: str) -> Optional[ast.AST]:
+    def parse_file(self, file_path: Path) -> Optional[ast.AST]:
         """
         Parses a Python file and returns its AST.
         Returns None if the file cannot be parsed or found.
@@ -119,18 +136,20 @@ class ImportCrawler:
         except (SyntaxError, FileNotFoundError):
             return None
 
-    def process_imports(self, tree: ast.AST, file_path: str, module_dir: str) -> None:
+    def process_imports(self, tree: ast.AST, file_path: Path, module_dir: Path) -> None:
         """Process import statements in the AST and add them to the graph."""
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     module_name = alias.name
-                    self.resolve_import(module_name, file_path, module_dir)
+                    self.resolve_import(module_name, str(file_path), str(module_dir))
             elif isinstance(node, ast.ImportFrom):
                 if isinstance(node.module, str):
                     module_name = node.module
                     if module_name:
-                        self.resolve_import(module_name, file_path, module_dir)
+                        self.resolve_import(
+                            module_name, str(file_path), str(module_dir)
+                        )
 
     def resolve_import(
         self, module_name: str, current_file: str, search_dir: str
@@ -142,7 +161,7 @@ class ImportCrawler:
             current = ModuleInfo(current_file)
             module = ModuleInfo(module_path)
             self.graph.add_dependency(current, module)
-            self.build_graph(module_path)
+            self.build_graph(None, module_path)
         else:
             self.categorize_unresolved_import(module_name)
             self.logger.debug(f"Could not resolve {module_name}")

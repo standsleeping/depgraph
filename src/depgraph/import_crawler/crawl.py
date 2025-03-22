@@ -23,7 +23,7 @@ def crawl(
 
     logger.info(f"Analyzing imports for {abs_file_path.name}")
     crawler = ImportCrawler(abs_file_path, logger)
-    crawler.build_graph(str(abs_file_path))
+    crawler.build_graph(abs_file_path, str(abs_file_path))
 
     graph: DependencyGraph = crawler.graph
 

@@ -9,7 +9,7 @@ def test_build_graph_single_file(crawler, tmp_path):
     test_file = tmp_path / "test.py"
     test_file.write_text("x = 1\ny = 2\n")
 
-    crawler.build_graph(str(test_file))
+    crawler.build_graph(test_file, str(test_file))
     assert str(test_file) in crawler.visited
     assert str(test_file) not in crawler.graph
 
@@ -30,7 +30,7 @@ def test_build_graph_with_imports(crawler, tmp_path):
 
     main_file.write_text(content)
 
-    crawler.build_graph(str(main_file))
+    crawler.build_graph(main_file, str(main_file))
 
     assert str(main_file) in crawler.visited
     key = ModuleInfo(str(main_file))
@@ -51,7 +51,7 @@ def test_build_graph_nested_imports(crawler, tmp_path):
     module3.write_text("x = 3")
     main_file.write_text("import module1")
 
-    crawler.build_graph(str(main_file))
+    crawler.build_graph(main_file, str(main_file))
 
     assert str(main_file) in crawler.visited
     assert str(module1) in crawler.visited
@@ -79,7 +79,7 @@ def test_build_graph_circular_imports(crawler, tmp_path):
     module1.write_text("import module2")
     module2.write_text("import module1")
 
-    crawler.build_graph(str(module1))
+    crawler.build_graph(module1, str(module1))
 
     assert str(module1) in crawler.visited
     assert str(module2) in crawler.visited
@@ -107,7 +107,7 @@ def test_build_graph_package_imports(crawler, tmp_path):
     main_file = tmp_path / "main.py"
     main_file.write_text("import mypackage")
 
-    crawler.build_graph(str(main_file))
+    crawler.build_graph(main_file, str(main_file))
 
     assert str(main_file) in crawler.visited
     assert str(init_file) in crawler.visited
@@ -121,7 +121,7 @@ def test_build_graph_nonexistent_import(crawler, tmp_path):
     main_file = tmp_path / "main.py"
     main_file.write_text("import nonexistent_module")
 
-    crawler.build_graph(str(main_file))
+    crawler.build_graph(main_file, str(main_file))
 
     assert str(main_file) in crawler.visited
     assert str(main_file) not in crawler.graph
@@ -132,7 +132,7 @@ def test_build_graph_syntax_error(crawler, tmp_path):
     main_file = tmp_path / "main.py"
     main_file.write_text("Not valid python!")
 
-    crawler.build_graph(str(main_file))
+    crawler.build_graph(main_file, str(main_file))
 
     assert str(main_file) in crawler.visited
     assert str(main_file) not in crawler.graph
@@ -145,7 +145,7 @@ def test_build_graph_already_visited(crawler, tmp_path):
 
     crawler.visited.add(str(test_file))
 
-    crawler.build_graph(str(test_file))
+    crawler.build_graph(test_file, str(test_file))
     assert str(test_file) not in crawler.graph
 
 
@@ -154,7 +154,7 @@ def test_build_graph_non_py_file(crawler, tmp_path):
     test_file = tmp_path / "test.txt"
     test_file.write_text("not a python file")
 
-    crawler.build_graph(str(test_file))
+    crawler.build_graph(test_file, str(test_file))
 
     assert str(test_file) not in crawler.visited
     assert str(test_file) not in crawler.graph
