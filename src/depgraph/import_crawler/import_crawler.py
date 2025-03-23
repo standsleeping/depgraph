@@ -1,17 +1,18 @@
 import ast
 import sys
-import logging
 import sysconfig
 from pathlib import Path
 from importlib.util import find_spec
 from typing import Optional, Dict, List
 from .module_info import ModuleInfo
-from depgraph.logger.setup_logger import setup_logger
+from depgraph.logging import get_logger
 from .package_finder import find_outermost_package_root
 from .package_searcher import find_module_in_package_hierarchy
 from .dependency_graph import DependencyGraph
 from .site_packages import find_project_site_packages
 from .import_categorizer import ImportCategorizer
+
+logger = get_logger(__name__)
 
 
 class ImportCrawler:
@@ -20,26 +21,16 @@ class ImportCrawler:
 
     Args:
         abs_file_path: The absolute path to the file to crawl
-        logger: The logger to use
     """
 
-    def __init__(
-        self, abs_file_path: Path, logger: logging.Logger | None = None
-    ) -> None:
+    def __init__(self, abs_file_path: Path) -> None:
         self.root_file_path = abs_file_path
         self.parent_path = abs_file_path.parent
         self.visited_paths: set[Path] = set()
         self.graph = DependencyGraph()
 
-        if logger is None:
-            logger = setup_logger()
-        self.logger = logger
-
-        # Old str-based version:
-        # self.logger.debug(f"Initialized with root: {os.path.basename(self.root_file)}")
-
         # New path-based version:
-        self.logger.debug(f"Initialized with root: {self.root_file_path.name}")
+        logger.debug(f"Initialized with root: {self.root_file_path.name}")
 
         # Get standard library paths
         paths: Dict[str, str] = sysconfig.get_paths()
@@ -52,14 +43,12 @@ class ImportCrawler:
         # Get site-packages paths for the project being analyzed
         self.site_packages_paths: set[Path] = find_project_site_packages(
             self.parent_path,
-            self.logger,
         )
 
         # Initialize the import categorizer
         self.import_categorizer = ImportCategorizer(
             self.stdlib_path_strs,
             self.site_packages_paths,
-            self.logger,
         )
 
     @property
@@ -91,17 +80,17 @@ class ImportCrawler:
             file_path = self.root_file_path
 
         if file_path in self.visited_paths or not file_path.suffix == ".py":
-            self.logger.debug(f"Skipping file: {file_path.name}")
+            logger.debug(f"Skipping file: {file_path.name}")
             return self.graph
 
-        self.logger.info(f"Building graph for {file_path.name}")
+        logger.info(f"Building graph for {file_path.name}")
 
         self.visited_paths.add(file_path)
 
         tree = self.parse_file(file_path)
 
         if tree is None:
-            self.logger.warning(f"Failed to parse {file_path.name}")
+            logger.warning(f"Failed to parse {file_path.name}")
             return self.graph
 
         module_dir = file_path.parent
@@ -146,9 +135,7 @@ class ImportCrawler:
         self, module_name_str: str, current_file_path: Path, search_dir: Path
     ) -> None:
         """Resolves the module path and updates the graph."""
-        self.logger.debug(
-            f"Resolving import {module_name_str} from {current_file_path}"
-        )
+        logger.debug(f"Resolving import {module_name_str} from {current_file_path}")
 
         module_path = self.find_module(module_name_str, search_dir)
 
@@ -159,7 +146,7 @@ class ImportCrawler:
             self.build_graph(module_path)
         else:
             self.categorize_unresolved_import(module_name_str)
-            self.logger.debug(f"Could not resolve {module_name_str}")
+            logger.debug(f"Could not resolve {module_name_str}")
 
     def categorize_unresolved_import(self, module_name: str) -> None:
         """Categorize an unresolved import using the ImportCategorizer."""
@@ -173,13 +160,12 @@ class ImportCrawler:
         3. If not found locally, try finding through sys.path
         """
         # First try searching through package hierarchy
-        outer_root: Path = find_outermost_package_root(search_dir, self.logger)
+        outer_root: Path = find_outermost_package_root(search_dir)
 
         module_path: Path | None = find_module_in_package_hierarchy(
             module_name,
             search_dir,
             outer_root,
-            self.logger,
         )
 
         if module_path:
@@ -187,9 +173,7 @@ class ImportCrawler:
 
         # Check if we're in a src-layout project
         if self.is_src_layout_project():
-            self.logger.debug(
-                f"Detected src-layout project, trying alternative resolution for {module_name}"
-            )
+            logger.debug(f"Detected src layout, trying resolution for {module_name}")
             # Find the src directory in the path
             path_parts: tuple[str, ...] = self.parent_path.parts
             if "src" in path_parts:
@@ -220,7 +204,7 @@ class ImportCrawler:
                     # Check all possible paths
                     for path in possible_paths:
                         if path.exists():
-                            self.logger.debug(f"Found module in src-layout: {path}")
+                            logger.debug(f"Found module in src-layout: {path}")
                             return path
 
         # If not found locally, try finding through sys.path
@@ -252,7 +236,7 @@ class ImportCrawler:
             # Add src project root to sys.path if found
             if src_root:
                 log_str = f"Adding src project root to sys.path: {src_root}"
-                self.logger.debug(log_str)
+                logger.debug(log_str)
                 sys.path.insert(0, str(src_root))
 
             # Look for the module using importlib

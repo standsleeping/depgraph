@@ -1,17 +1,18 @@
-import logging
-from pathlib import Path
-from typing import Set
 import sysconfig
+from typing import Set
+from pathlib import Path
+from depgraph.logging import get_logger
+
+logger = get_logger(__name__)
 
 
-def find_project_site_packages(project_root: Path, logger: logging.Logger) -> Set[Path]:
+def find_project_site_packages(project_root: Path) -> Set[Path]:
     """
     Find site-packages directories associated with the project being analyzed.
     Searches from project root upwards until finding Python environment markers.
 
     Args:
         project_root: Root directory of the project to analyze
-        logger: Logger instance for debug output
 
     Returns:
         Set of absolute paths to site-packages directories

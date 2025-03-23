@@ -25,7 +25,6 @@ python -m depgraph ./src/depgraph/processors/process_file.py
 - `file_path`: Path to the Python file to analyze
 - `--depth`: Depth of the analysis (default: 4)
 - `--log-level`: Set logging level (DEBUG, INFO) (default: INFO)
-- `--log-file`: Path to log file (if not specified, logs to stderr only)
 - `--scope-filter`: Filter output to a specific scope (e.g., '<module>.outer.Inner.method')
 - `--output-file`: Write results to specified file
 - `--output-format`: Format for output file (JSON) (default: JSON)
@@ -35,7 +34,6 @@ Example with all options:
 python -m depgraph ./src/depgraph/processors/process_file.py \
   --depth 6 \
   --log-level DEBUG \
-  --log-file ./depgraph.log \
   --scope-filter "<module>.my_function"
 ```
 
@@ -54,6 +52,5 @@ Example with output file:
 ```bash
 python -m depgraph ./src/depgraph/processors/process_file.py \
   --log-level DEBUG \
-  --log-file ./depgraph.log \
   --output-file ./depgraph.json
 ```

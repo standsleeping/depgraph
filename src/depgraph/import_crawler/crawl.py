@@ -1,19 +1,19 @@
 from pathlib import Path
-from logging import Logger
 from .import_crawler import ImportCrawler
 from .dependency_graph import DependencyGraph
 from typing import Dict, List
+from depgraph.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def crawl(
     abs_file_path: Path,
-    logger: Logger,
 ) -> tuple[DependencyGraph, Dict[str, List[str]]]:
     """Crawl the import graph for the given entry file.
 
     Args:
         abs_file_path: The file to crawl
-        logger: The logger to use
 
     Returns:
         A tuple containing:
@@ -22,7 +22,7 @@ def crawl(
     """
 
     logger.info(f"Analyzing imports for {abs_file_path.name}")
-    crawler = ImportCrawler(abs_file_path, logger)
+    crawler = ImportCrawler(abs_file_path)
     crawler.build_graph(abs_file_path)
 
     graph: DependencyGraph = crawler.graph

@@ -1,6 +1,5 @@
 import os
 import pytest
-from pathlib import Path
 from unittest.mock import Mock, patch
 from depgraph.import_crawler.import_categorizer import ImportCategorizer
 
@@ -17,14 +16,10 @@ def site_packages_paths(tmp_path):
     return {site_pkg}
 
 
-@pytest.fixture
-def logger():
-    return Mock()
-
 
 @pytest.fixture
-def categorizer(stdlib_paths, site_packages_paths, logger):
-    return ImportCategorizer(stdlib_paths, site_packages_paths, logger)
+def categorizer(stdlib_paths, site_packages_paths):
+    return ImportCategorizer(stdlib_paths, site_packages_paths)
 
 
 def test_categorize_builtin_module(categorizer):

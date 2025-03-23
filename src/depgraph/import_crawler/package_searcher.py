@@ -1,7 +1,8 @@
-import logging
 from pathlib import Path
 from typing import Optional, List
-from depgraph.logger.setup_logger import setup_logger
+from depgraph.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_ancestor_paths(start_dir: Path, outer_root: Path) -> List[Path]:
@@ -25,7 +26,6 @@ def find_module_in_package_hierarchy(
     module_name: str,
     start_dir: Path,
     outer_root: Path,
-    logger: Optional[logging.Logger] = None,
 ) -> Optional[Path]:
     """
     Searches for a module through the package hierarchy by checking each ancestor directory.
@@ -34,10 +34,7 @@ def find_module_in_package_hierarchy(
         module_name: Name of the module to find (can be dotted)
         start_dir: Directory to start searching from
         outer_root: Outermost package root directory
-        logger: Optional logger instance
     """
-    if logger is None:
-        logger = setup_logger()
 
     logger.debug(f"Searching for {module_name} from {start_dir} up to {outer_root}")
 

@@ -1,8 +1,9 @@
 import json
+import logging
 from pathlib import Path
 from typing import Dict, Any
 from depgraph.cli.parse_args import parse_args
-from depgraph.logger.setup_logger import setup_logger
+from depgraph.logging import configure_logging, get_logger
 from depgraph.processors import process_file
 from depgraph.formatters.write_graph_output import write_output
 from depgraph.formatters.process_output import process_output
@@ -13,23 +14,25 @@ from depgraph.processors.process_scope import process_scope
 from depgraph.import_crawler.crawl import crawl
 from depgraph.tools.convert_to_abs_path import convert_to_abs_path
 
+logger = get_logger(__name__)
+
+
 def run_analysis() -> None:
     (
         file_path,
         depth,
-        log_level,
-        log_file,
+        parsed_log_level,
         scope_filter,
         output_file,
         output_format,
     ) = parse_args()
 
-    logger = setup_logger(level=log_level, log_file=log_file)
+    log_level = getattr(logging, parsed_log_level)
+    configure_logging(level=log_level)
     logger.debug("Starting analysis with parameters:")
     logger.debug(f"  file_path: {file_path}")
     logger.debug(f"  depth: {depth}")
     logger.debug(f"  log_level: {log_level}")
-    logger.debug(f"  log_file: {log_file}")
 
     if scope_filter:
         logger.debug(f"  scope_filter: {scope_filter}")
@@ -64,7 +67,6 @@ def run_analysis() -> None:
 
     graph, unresolved_imports = crawl(
         abs_file_path=abs_file_path,
-        logger=logger,
     )
 
     json_graph = graph.to_json()
@@ -79,4 +81,3 @@ def run_analysis() -> None:
     else:
         # indent the output
         print(json.dumps(output, indent=4))
-

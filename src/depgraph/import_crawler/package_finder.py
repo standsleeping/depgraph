@@ -1,10 +1,11 @@
 from pathlib import Path
-import logging
-from depgraph.logger.setup_logger import setup_logger
+from depgraph.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def find_outermost_package_root(
-    start_dir: Path, logger: logging.Logger | None = None
+    start_dir: Path
 ) -> Path:
     """
     Recursively searches for the outermost Python package/module directory.
@@ -14,13 +15,10 @@ def find_outermost_package_root(
 
     Args:
         start_dir: The starting directory path to begin the search from
-        logger: Optional logger instance
 
     Returns:
         The path to the outermost Python package/module directory
     """
-    if logger is None:
-        logger = setup_logger()
 
     logger.debug(f"Finding outermost package root starting from: {start_dir}")
 

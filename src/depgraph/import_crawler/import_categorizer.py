@@ -1,16 +1,17 @@
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Set, Dict, List
-from logging import Logger
+from depgraph.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class ImportCategorizer:
     def __init__(
-        self, stdlib_paths: Set[str], site_packages_paths: Set[Path], logger: Logger
+        self, stdlib_paths: Set[str], site_packages_paths: Set[Path]
     ) -> None:
         self.stdlib_paths = stdlib_paths
         self.site_packages_paths = site_packages_paths
-        self.logger = logger
         self.system_imports: Set[str] = set()
         self.third_party_imports: Set[str] = set()
         self.local_imports: Set[str] = set()
