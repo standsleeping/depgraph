@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import Dict, Set, List, Optional
-from .module_info import ModuleInfo
+from .file_info import FileInfo
 from .import_categorizer import ImportCategorizer
 
 @dataclass
-class DependencyGraph:
+class FileDependencyGraph:
     """Represents a dependency graph of Python modules."""
 
-    dependencies: Dict[ModuleInfo, Set[ModuleInfo]]
+    dependencies: Dict[FileInfo, Set[FileInfo]]
     import_categorizer: ImportCategorizer
 
     def __init__(self, import_categorizer: Optional[ImportCategorizer] = None) -> None:
@@ -15,17 +15,17 @@ class DependencyGraph:
         if import_categorizer:
             self.import_categorizer = import_categorizer
 
-    def add_dependency(self, source: ModuleInfo, target: ModuleInfo) -> None:
+    def add_dependency(self, source: FileInfo, target: FileInfo) -> None:
         """Add a dependency from source to target module."""
         self.dependencies.setdefault(source, set()).add(target)
         # Ensure target exists in graph even if it has no dependencies
         self.dependencies.setdefault(target, set())
 
-    def __getitem__(self, key: ModuleInfo) -> Set[ModuleInfo]:
+    def __getitem__(self, key: FileInfo) -> Set[FileInfo]:
         """Allow dictionary-style access to dependencies."""
         return self.dependencies[key]
 
-    def __setitem__(self, key: ModuleInfo, value: Set[ModuleInfo]) -> None:
+    def __setitem__(self, key: FileInfo, value: Set[FileInfo]) -> None:
         """Allow dictionary-style assignment of dependencies."""
         self.dependencies[key] = value
 
@@ -35,7 +35,7 @@ class DependencyGraph:
 
     def get_imports(self, file_path: str) -> List[str]:
         """Get a list of all files imported by the given file."""
-        # Find the ModuleInfo matching this file path
+        # Find the FileInfo matching this file path
         for source, targets in self.dependencies.items():
             if str(source.full_path) == file_path:
                 return [str(target.full_path) for target in targets]

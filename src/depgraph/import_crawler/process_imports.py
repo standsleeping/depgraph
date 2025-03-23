@@ -1,6 +1,6 @@
 import ast
 from pathlib import Path
-from .dependency_graph import DependencyGraph
+from .file_dependency_graph import FileDependencyGraph
 from .resolve_import import resolve_import
 from depgraph.logging import get_logger
 logger = get_logger(__name__)
@@ -9,10 +9,10 @@ def process_imports(
     tree: ast.AST,
     file_path: Path,
     module_dir: Path,
-    graph: DependencyGraph,
+    graph: FileDependencyGraph,
     stdlib_paths: set[Path],
     visited_paths: set[Path],
-) -> DependencyGraph:
+) -> FileDependencyGraph:
     """Process import statements in the AST and add them to the graph."""
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):

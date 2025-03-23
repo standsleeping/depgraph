@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 import pytest
 from textwrap import dedent
-from depgraph.import_crawler.dependency_graph import DependencyGraph
+from depgraph.import_crawler.file_dependency_graph import FileDependencyGraph
 from depgraph.import_crawler.is_source_layout_package import is_src_layout_project
 from depgraph.import_crawler.build_graph import build_graph
 from depgraph.import_crawler.import_categorizer import ImportCategorizer
@@ -207,7 +207,7 @@ def setup_dependency_graph(file_path):
     import_categorizer = ImportCategorizer(stdlib_path_strs, site_packages_paths)
 
     # Create dependency graph
-    graph = DependencyGraph(import_categorizer)
+    graph = FileDependencyGraph(import_categorizer)
 
     return graph, visited_paths, stdlib_paths
 

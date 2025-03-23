@@ -1,15 +1,15 @@
 from pathlib import Path
-from depgraph.import_crawler.module_info import ModuleInfo
-from depgraph.import_crawler.dependency_graph import DependencyGraph
+from depgraph.import_crawler.file_info import FileInfo
+from depgraph.import_crawler.file_dependency_graph import FileDependencyGraph
 
 
 def test_add_dependency():
     """Adds dependencies to the graph."""
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
 
     # Create test modules
-    mod_a = ModuleInfo(Path("/path/to/a.py"))
-    mod_b = ModuleInfo(Path("/path/to/b.py"))
+    mod_a = FileInfo(Path("/path/to/a.py"))
+    mod_b = FileInfo(Path("/path/to/b.py"))
 
     # Add dependency
     graph.add_dependency(mod_a, mod_b)
@@ -22,11 +22,11 @@ def test_add_dependency():
 
 def test_to_json_simple():
     """Converts a simple graph to JSON format."""
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
 
     # Create test modules
-    mod_a = ModuleInfo(Path("/path/to/a.py"))
-    mod_b = ModuleInfo(Path("/path/to/b.py"))
+    mod_a = FileInfo(Path("/path/to/a.py"))
+    mod_b = FileInfo(Path("/path/to/b.py"))
 
     # Add dependencies
     graph.add_dependency(mod_a, mod_b)
@@ -45,12 +45,12 @@ def test_to_json_simple():
 
 def test_to_json_complex():
     """Converts a more complex graph to JSON format."""
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
 
     # Create test modules
-    mod_a = ModuleInfo(Path("/path/to/a.py"))
-    mod_b = ModuleInfo(Path("/path/to/b.py"))
-    mod_c = ModuleInfo(Path("/path/to/c.py"))
+    mod_a = FileInfo(Path("/path/to/a.py"))
+    mod_b = FileInfo(Path("/path/to/b.py"))
+    mod_c = FileInfo(Path("/path/to/c.py"))
 
     # Add dependencies
     graph.add_dependency(mod_a, mod_b)
@@ -74,17 +74,17 @@ def test_to_json_complex():
 
 def test_to_json_empty():
     """Converts an empty graph to JSON format."""
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     json_graph = graph.to_json()
     assert json_graph == {}
 
 
 def test_add_dependency_idempotent():
     """Adds the same dependency multiple times works correctly."""
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
 
-    mod_a = ModuleInfo(Path("/path/to/a.py"))
-    mod_b = ModuleInfo(Path("/path/to/b.py"))
+    mod_a = FileInfo(Path("/path/to/a.py"))
+    mod_b = FileInfo(Path("/path/to/b.py"))
 
     # Add same dependency multiple times
     graph.add_dependency(mod_a, mod_b)

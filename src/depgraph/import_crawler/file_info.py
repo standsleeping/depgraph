@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ModuleInfo:
+class FileInfo:
     """Information about a Python module."""
 
     full_path: Path
@@ -22,4 +22,4 @@ class ModuleInfo:
         return self.file_name
 
     def __repr__(self) -> str:
-        return f"ModuleInfo(full_path={self.full_path})"
+        return f"FileInfo(full_path={self.full_path})"

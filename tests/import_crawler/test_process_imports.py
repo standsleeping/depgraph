@@ -1,9 +1,9 @@
 import ast
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from depgraph.import_crawler.process_imports import process_imports
-from depgraph.import_crawler.dependency_graph import DependencyGraph
+from depgraph.import_crawler.file_dependency_graph import FileDependencyGraph
 
 
 def test_process_basic_import():
@@ -12,7 +12,7 @@ def test_process_basic_import():
     tree = ast.parse(code)
     file_path = Path("test.py")
     module_dir = Path("/test")
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     visited_paths = set()
     stdlib_paths = set()
 
@@ -35,7 +35,7 @@ def test_process_multiple_imports():
     tree = ast.parse(code)
     file_path = Path("test.py")
     module_dir = Path("/test")
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     visited_paths = set()
     stdlib_paths = set()
 
@@ -85,7 +85,7 @@ def test_process_from_import():
     tree = ast.parse(code)
     file_path = Path("test.py")
     module_dir = Path("/test")
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     visited_paths = set()
     stdlib_paths = set()
 
@@ -108,7 +108,7 @@ def test_process_from_import_multiple():
     tree = ast.parse(code)
     file_path = Path("test.py")
     module_dir = Path("/test")
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     visited_paths = set()
     stdlib_paths = set()
 
@@ -138,7 +138,7 @@ def test_process_nested_imports():
     tree = ast.parse(code)
     file_path = Path("test.py")
     module_dir = Path("/test")
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     visited_paths = set()
     stdlib_paths = set()
 
@@ -188,7 +188,7 @@ def test_process_empty_from_import():
     tree = ast.parse(code)
     file_path = Path("test.py")
     module_dir = Path("/test")
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     visited_paths = set()
     stdlib_paths = set()
 
@@ -212,7 +212,7 @@ def test_process_complex_imports():
     tree = ast.parse(code)
     file_path = Path("test.py")
     module_dir = Path("/test")
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     visited_paths = set()
     stdlib_paths = set()
 

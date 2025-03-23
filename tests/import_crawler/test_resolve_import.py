@@ -1,8 +1,6 @@
-from unittest.mock import patch, Mock
-from pathlib import Path
-
-from depgraph.import_crawler.module_info import ModuleInfo
-from depgraph.import_crawler.dependency_graph import DependencyGraph
+from unittest.mock import patch
+from depgraph.import_crawler.file_info import FileInfo
+from depgraph.import_crawler.file_dependency_graph import FileDependencyGraph
 from depgraph.import_crawler.resolve_import import resolve_import
 from depgraph.import_crawler.import_categorizer import ImportCategorizer
 
@@ -15,7 +13,7 @@ def test_resolve_local_import(tmp_path):
     current_file = tmp_path / "current.py"
     current_file.touch()
 
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     visited_paths = set()
     stdlib_paths = set()
@@ -29,8 +27,8 @@ def test_resolve_local_import(tmp_path):
         visited_paths=visited_paths,
     )
 
-    key = ModuleInfo(current_file)
-    value = ModuleInfo(local_module)
+    key = FileInfo(current_file)
+    value = FileInfo(local_module)
 
     assert graph[key] == {value}
 
@@ -40,7 +38,7 @@ def test_resolve_nonexistent_module(tmp_path):
     current_file = tmp_path / "current.py"
     current_file.touch()
 
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     visited_paths = set()
     stdlib_paths = set()
@@ -69,7 +67,7 @@ def test_resolve_multiple_imports(tmp_path):
     current_file = tmp_path / "current.py"
     current_file.touch()
 
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     visited_paths = set()
     stdlib_paths = set()
@@ -92,9 +90,9 @@ def test_resolve_multiple_imports(tmp_path):
         visited_paths=visited_paths,
     )
 
-    key = ModuleInfo(current_file)
-    value1 = ModuleInfo(module1)
-    value2 = ModuleInfo(module2)
+    key = FileInfo(current_file)
+    value1 = FileInfo(module1)
+    value2 = FileInfo(module2)
 
     assert graph[key] == {value1, value2}
 
@@ -110,7 +108,7 @@ def test_resolve_recursive_imports(tmp_path):
     module1.write_text("import module2")
     current_file.touch()
 
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     visited_paths = set()
     stdlib_paths = set()
@@ -141,7 +139,7 @@ def test_resolve_duplicate_imports(tmp_path):
     current_file = tmp_path / "current.py"
     current_file.touch()
 
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     visited_paths = set()
     stdlib_paths = set()
@@ -166,8 +164,8 @@ def test_resolve_duplicate_imports(tmp_path):
     )
 
     # Only appears once in the graph
-    key = ModuleInfo(current_file)
-    value = ModuleInfo(local_module)
+    key = FileInfo(current_file)
+    value = FileInfo(local_module)
     assert graph[key] == {value}
 
 
@@ -182,14 +180,14 @@ def test_resolve_import_updates_existing_set(tmp_path):
     current_file = tmp_path / "current.py"
     current_file.touch()
 
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     visited_paths = set()
     stdlib_paths = set()
 
     # Manually add existing import
-    key = ModuleInfo(current_file)
-    value1 = ModuleInfo(module1)
+    key = FileInfo(current_file)
+    value1 = FileInfo(module1)
     graph[key] = {value1}
 
     # Resolve another import
@@ -203,9 +201,9 @@ def test_resolve_import_updates_existing_set(tmp_path):
     )
 
     # Preserves existing import and add new one
-    key = ModuleInfo(current_file)
-    value1 = ModuleInfo(module1)
-    value2 = ModuleInfo(module2)
+    key = FileInfo(current_file)
+    value1 = FileInfo(module1)
+    value2 = FileInfo(module2)
     assert graph[key] == {value1, value2}
 
 
@@ -218,7 +216,7 @@ def test_resolve_import_circular_reference(tmp_path):
     module1.write_text("import module2")
     module2.write_text("import module1")
 
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     visited_paths = set()
     stdlib_paths = set()
@@ -246,7 +244,7 @@ def test_categorize_unresolved_imports(tmp_path):
     current_file.touch()
 
     # Create a graph with a mock ImportCategorizer
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     stdlib_paths = set()
     visited_paths = set()
@@ -282,7 +280,7 @@ def test_categorize_dotted_imports(tmp_path):
     current_file.touch()
 
     # Create a graph with a mock ImportCategorizer
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     stdlib_paths = set()
     visited_paths = set()
@@ -307,7 +305,7 @@ def test_categorize_private_imports(tmp_path):
     current_file.touch()
 
     # Create a graph with a mock ImportCategorizer
-    graph = DependencyGraph()
+    graph = FileDependencyGraph()
     graph.import_categorizer = ImportCategorizer(set(), set())
     stdlib_paths = set()
     visited_paths = set()

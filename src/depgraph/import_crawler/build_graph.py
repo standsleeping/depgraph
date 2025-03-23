@@ -1,6 +1,6 @@
 from pathlib import Path
 from depgraph.logging import get_logger
-from .dependency_graph import DependencyGraph
+from .file_dependency_graph import FileDependencyGraph
 from .parse_file import parse_file
 from .process_imports import process_imports
 logger = get_logger(__name__)
@@ -9,10 +9,10 @@ logger = get_logger(__name__)
 def build_graph(
     *,
     file_path: Path,
-    graph: DependencyGraph,
+    graph: FileDependencyGraph,
     visited_paths: set[Path],
     stdlib_paths: set[Path],
-) -> DependencyGraph:
+) -> FileDependencyGraph:
     """
     Recursively builds the import graph.
     If no file path is provided, uses the root file.

@@ -1,7 +1,7 @@
 import sysconfig
 from pathlib import Path
 from .build_graph import build_graph
-from .dependency_graph import DependencyGraph
+from .file_dependency_graph import FileDependencyGraph
 from .import_categorizer import ImportCategorizer
 from .site_packages import find_project_site_packages
 from typing import Dict, List
@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 def crawl(
     abs_file_path: Path,
-) -> tuple[DependencyGraph, Dict[str, List[str]]]:
+) -> tuple[FileDependencyGraph, Dict[str, List[str]]]:
     """Crawl the import graph for the given entry file.
 
     Args:
@@ -20,7 +20,7 @@ def crawl(
 
     Returns:
         A tuple containing:
-        - DependencyGraph: The dependency graph of imported modules
+        - FileDependencyGraph: The dependency graph of imported modules
         - dict: Unresolved imports categorized as local, system, and third-party
     """
 
@@ -46,7 +46,7 @@ def crawl(
         site_packages_paths,
     )
 
-    graph = DependencyGraph(import_categorizer)
+    graph = FileDependencyGraph(import_categorizer)
 
     graph = build_graph(
         file_path=abs_file_path,

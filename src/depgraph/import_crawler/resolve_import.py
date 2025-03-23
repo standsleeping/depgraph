@@ -1,6 +1,6 @@
 from pathlib import Path
-from .dependency_graph import DependencyGraph
-from .module_info import ModuleInfo
+from .file_dependency_graph import FileDependencyGraph
+from .file_info import FileInfo
 from depgraph.logging import get_logger
 from .find_module import find_module
 
@@ -12,7 +12,7 @@ def resolve_import(
     module_name_str: str,
     current_file_path: Path,
     search_dir: Path,
-    graph: DependencyGraph,
+    graph: FileDependencyGraph,
     stdlib_paths: set[Path],
     visited_paths: set[Path],
 ) -> None:
@@ -28,8 +28,8 @@ def resolve_import(
 
     if module_path:
         from .build_graph import build_graph
-        current = ModuleInfo(current_file_path)
-        module = ModuleInfo(module_path)
+        current = FileInfo(current_file_path)
+        module = FileInfo(module_path)
         graph.add_dependency(current, module)
         build_graph(
             file_path=module_path,
