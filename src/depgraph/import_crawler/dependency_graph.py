@@ -1,16 +1,19 @@
 from dataclasses import dataclass
-from typing import Dict, Set, List
+from typing import Dict, Set, List, Optional
 from .module_info import ModuleInfo
-
+from .import_categorizer import ImportCategorizer
 
 @dataclass
 class DependencyGraph:
     """Represents a dependency graph of Python modules."""
 
     dependencies: Dict[ModuleInfo, Set[ModuleInfo]]
+    import_categorizer: ImportCategorizer
 
-    def __init__(self) -> None:
+    def __init__(self, import_categorizer: Optional[ImportCategorizer] = None) -> None:
         self.dependencies = {}
+        if import_categorizer:
+            self.import_categorizer = import_categorizer
 
     def add_dependency(self, source: ModuleInfo, target: ModuleInfo) -> None:
         """Add a dependency from source to target module."""

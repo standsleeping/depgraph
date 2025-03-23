@@ -1,6 +1,9 @@
+import sysconfig
 from pathlib import Path
-from .import_crawler import ImportCrawler
+from .build_graph import build_graph
 from .dependency_graph import DependencyGraph
+from .import_categorizer import ImportCategorizer
+from .site_packages import find_project_site_packages
 from typing import Dict, List
 from depgraph.logging import get_logger
 
@@ -22,14 +25,37 @@ def crawl(
     """
 
     logger.info(f"Analyzing imports for {abs_file_path.name}")
-    crawler = ImportCrawler(abs_file_path)
-    crawler.build_graph(abs_file_path)
 
-    graph: DependencyGraph = crawler.graph
+    parent_path = abs_file_path.parent
+    visited_paths: set[Path] = set()
+
+    # Get standard library paths
+    paths: Dict[str, str] = sysconfig.get_paths()
+
+    # We use strings here because this data is always used with importlib.util.find_spec.
+    stdlib_path_strs = set([p for p in paths.values()])
+
+    stdlib_paths: set[Path] = set([Path(p) for p in paths.values()])
+
+    site_packages_paths: set[Path] = find_project_site_packages(
+        parent_path,
+    )
+
+    import_categorizer = ImportCategorizer(
+        stdlib_path_strs,
+        site_packages_paths,
+    )
+
+    graph = DependencyGraph(import_categorizer)
+
+    graph = build_graph(
+        file_path=abs_file_path,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
 
     # Get unresolved imports for JSON output
-    unresolved_imports = crawler.get_unresolved_imports()
+    unresolved_imports = graph.import_categorizer.get_unresolved_imports()
 
     return graph, unresolved_imports
-
-
