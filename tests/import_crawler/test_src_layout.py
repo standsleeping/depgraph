@@ -3,7 +3,12 @@ import shutil
 from pathlib import Path
 import pytest
 from textwrap import dedent
-from depgraph.import_crawler.import_crawler import ImportCrawler
+from depgraph.import_crawler.dependency_graph import DependencyGraph
+from depgraph.import_crawler.is_source_layout_package import is_src_layout_project
+from depgraph.import_crawler.build_graph import build_graph
+from depgraph.import_crawler.import_categorizer import ImportCategorizer
+from depgraph.import_crawler.site_packages import find_project_site_packages
+import sysconfig
 
 
 @pytest.fixture
@@ -184,17 +189,36 @@ def complex_src_project():
         shutil.rmtree(project_dir)
 
 
+# Helper function to setup common objects needed for tests
+def setup_dependency_graph(file_path):
+    """Setup a dependency graph with necessary objects for testing."""
+    parent_path = file_path.parent
+    visited_paths = set()
+
+    # Get standard library paths
+    paths = sysconfig.get_paths()
+    stdlib_paths = set([Path(p) for p in paths.values()])
+
+    # Get site-packages paths
+    site_packages_paths = find_project_site_packages(parent_path)
+
+    # Initialize the import categorizer
+    stdlib_path_strs = set([p for p in paths.values()])
+    import_categorizer = ImportCategorizer(stdlib_path_strs, site_packages_paths)
+
+    # Create dependency graph
+    graph = DependencyGraph(import_categorizer)
+
+    return graph, visited_paths, stdlib_paths
+
+
 # Basic tests using the simple src-layout project
 def test_src_layout_detection(sample_src_project):
     """Detects src-layout projects."""
     main_file = sample_src_project / "src" / "sample_package" / "main.py"
 
-    # Initialize the crawler with the main file
-    crawler = ImportCrawler(main_file)
-
-    # Assert that the crawler detects this is a src-layout project
-    assert hasattr(crawler, "is_src_layout_project")
-    assert crawler.is_src_layout_project()
+    # Check if the project is a src-layout project
+    assert is_src_layout_project(main_file.parent)
 
 
 def test_import_resolution_in_src_layout(sample_src_project):
@@ -204,18 +228,23 @@ def test_import_resolution_in_src_layout(sample_src_project):
         sample_src_project / "src" / "sample_package" / "submodule" / "helper.py"
     )
 
-    # Initialize the crawler
-    crawler = ImportCrawler(main_file)
+    # Setup necessary objects
+    graph, visited_paths, stdlib_paths = setup_dependency_graph(main_file)
 
     # Build the graph with our file
-    crawler.build_graph(main_file)
+    build_graph(
+        file_path=main_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
 
     # Check that the graph contains the dependency
     main_file_str = str(main_file)
     helper_file_str = str(helper_file)
 
     # Use the get_imports method
-    imports = crawler.graph.get_imports(main_file_str)
+    imports = graph.get_imports(main_file_str)
     assert helper_file_str in imports
 
 
@@ -226,23 +255,28 @@ def test_complete_dependency_graph(sample_src_project):
         sample_src_project / "src" / "sample_package" / "submodule" / "helper.py"
     )
 
-    # Initialize the crawler
-    crawler = ImportCrawler(main_file)
+    # Setup necessary objects
+    graph, visited_paths, stdlib_paths = setup_dependency_graph(main_file)
 
     # Build the graph
-    crawler.build_graph(main_file)
+    build_graph(
+        file_path=main_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
 
     # Check that both files are in the graph
     main_file_str = str(main_file)
     helper_file_str = str(helper_file)
 
-    all_files = crawler.graph.get_all_files()
+    all_files = graph.get_all_files()
     assert main_file_str in all_files
     assert helper_file_str in all_files
 
     # Check the import relationship
-    assert crawler.graph.imports(main_file_str, helper_file_str)
-    assert crawler.graph.imported_by(helper_file_str, main_file_str)
+    assert graph.imports(main_file_str, helper_file_str)
+    assert graph.imported_by(helper_file_str, main_file_str)
 
 
 # Advanced tests using the complex src-layout project
@@ -250,9 +284,16 @@ def test_complex_import_resolution(complex_src_project):
     """Complex import patterns are correctly resolved in a src-layout project."""
     main_file = complex_src_project / "src" / "complex_package" / "main.py"
 
-    # Initialize the crawler and build the dependency graph
-    crawler = ImportCrawler(main_file)
-    crawler.build_graph(main_file)
+    # Setup necessary objects
+    graph, visited_paths, stdlib_paths = setup_dependency_graph(main_file)
+
+    # Build the graph
+    build_graph(
+        file_path=main_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
 
     # Expected files that should be imported by main.py
     expected_imports = [
@@ -282,7 +323,7 @@ def test_complex_import_resolution(complex_src_project):
     ]
 
     # Get all imports from the main file
-    imports = crawler.graph.get_imports(str(main_file))
+    imports = graph.get_imports(str(main_file))
 
     # Check that each expected import is in the dependencies
     for expected_import in expected_imports:
@@ -296,12 +337,19 @@ def test_transitive_dependencies(complex_src_project):
         complex_src_project / "src" / "complex_package" / "module_a" / "common.py"
     )
 
-    # Initialize the crawler and build the dependency graph
-    crawler = ImportCrawler(main_file)
-    crawler.build_graph(main_file)
+    # Setup necessary objects
+    graph, visited_paths, stdlib_paths = setup_dependency_graph(main_file)
+
+    # Build the graph
+    build_graph(
+        file_path=main_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
 
     # Check if there's a transitive dependency from main to common
-    assert crawler.graph.has_transitive_dependency(str(main_file), str(common_file))
+    assert graph.has_transitive_dependency(str(main_file), str(common_file))
 
 
 def test_circular_dependencies(complex_src_project):
@@ -337,14 +385,21 @@ def test_circular_dependencies(complex_src_project):
         """)
         )
 
-    # Initialize the crawler and build the dependency graph
-    crawler = ImportCrawler(module_a_file)
-    crawler.build_graph(module_a_file)
+    # Setup necessary objects
+    graph, visited_paths, stdlib_paths = setup_dependency_graph(module_a_file)
+
+    # Build the graph
+    build_graph(
+        file_path=module_a_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
 
     # Check that both modules import each other (circular dependency)
     module_a_str = str(module_a_file)
     module_b_str = str(module_b_file)
 
     # Check both import directions
-    assert crawler.graph.imports(module_a_str, module_b_str)
-    assert crawler.graph.imports(module_b_str, module_a_str)
+    assert graph.imports(module_a_str, module_b_str)
+    assert graph.imports(module_b_str, module_a_str)

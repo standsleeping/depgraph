@@ -1,20 +1,30 @@
-import pytest
 from textwrap import dedent
 from depgraph.import_crawler.module_info import ModuleInfo
-from depgraph.import_crawler.import_crawler import ImportCrawler
+from depgraph.import_crawler.dependency_graph import DependencyGraph
+from depgraph.import_crawler.build_graph import build_graph
 
 
-def test_build_graph_single_file(crawler, tmp_path):
+def test_build_graph_single_file(tmp_path):
     """Builds graph for a single file with no imports."""
     test_file = tmp_path / "test.py"
     test_file.write_text("x = 1\ny = 2\n")
 
-    crawler.build_graph(test_file)
-    assert test_file in crawler.visited_paths
-    assert test_file not in crawler.graph
+    graph = DependencyGraph()
+    visited_paths = set()
+    stdlib_paths = set()
+
+    result = build_graph(
+        file_path=test_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
+
+    assert test_file in visited_paths
+    assert len(result.dependencies) == 0
 
 
-def test_build_graph_with_imports(crawler, tmp_path):
+def test_build_graph_with_imports(tmp_path):
     """Builds graph for a file with imports."""
     module1 = tmp_path / "module1.py"
     module2 = tmp_path / "module2.py"
@@ -30,16 +40,26 @@ def test_build_graph_with_imports(crawler, tmp_path):
 
     main_file.write_text(content)
 
-    crawler.build_graph(main_file)
+    graph = DependencyGraph()
+    visited_paths = set()
+    stdlib_paths = set()
 
-    assert main_file in crawler.visited_paths
+    result = build_graph(
+        file_path=main_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
+
+    assert main_file in visited_paths
+
     key = ModuleInfo(main_file)
     value1 = ModuleInfo(module1)
     value2 = ModuleInfo(module2)
-    assert crawler.graph[key] == {value1, value2}
+    assert result[key] == {value1, value2}
 
 
-def test_build_graph_nested_imports(crawler, tmp_path):
+def test_build_graph_nested_imports(tmp_path):
     """Builds graph with nested import dependencies."""
     module1 = tmp_path / "module1.py"
     module2 = tmp_path / "module2.py"
@@ -51,27 +71,36 @@ def test_build_graph_nested_imports(crawler, tmp_path):
     module3.write_text("x = 3")
     main_file.write_text("import module1")
 
-    crawler.build_graph(main_file)
+    graph = DependencyGraph()
+    visited_paths = set()
+    stdlib_paths = set()
 
-    assert main_file in crawler.visited_paths
-    assert module1 in crawler.visited_paths
-    assert module2 in crawler.visited_paths
-    assert module3 in crawler.visited_paths
+    result = build_graph(
+        file_path=main_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
+
+    assert main_file in visited_paths
+    assert module1 in visited_paths
+    assert module2 in visited_paths
+    assert module3 in visited_paths
 
     key = ModuleInfo(main_file)
     value1 = ModuleInfo(module1)
-    assert crawler.graph[key] == {value1}
+    assert result[key] == {value1}
 
     key = ModuleInfo(module1)
     value2 = ModuleInfo(module2)
-    assert crawler.graph[key] == {value2}
+    assert result[key] == {value2}
 
     key = ModuleInfo(module2)
     value3 = ModuleInfo(module3)
-    assert crawler.graph[key] == {value3}
+    assert result[key] == {value3}
 
 
-def test_build_graph_circular_imports(crawler, tmp_path):
+def test_build_graph_circular_imports(tmp_path):
     """Handles circular import dependencies."""
     module1 = tmp_path / "module1.py"
     module2 = tmp_path / "module2.py"
@@ -79,21 +108,30 @@ def test_build_graph_circular_imports(crawler, tmp_path):
     module1.write_text("import module2")
     module2.write_text("import module1")
 
-    crawler.build_graph(module1)
+    graph = DependencyGraph()
+    visited_paths = set()
+    stdlib_paths = set()
 
-    assert module1 in crawler.visited_paths
-    assert module2 in crawler.visited_paths
+    result = build_graph(
+        file_path=module1,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
+
+    assert module1 in visited_paths
+    assert module2 in visited_paths
 
     key = ModuleInfo(module1)
     value2 = ModuleInfo(module2)
-    assert crawler.graph[key] == {value2}
+    assert result[key] == {value2}
 
     key = ModuleInfo(module2)
     value1 = ModuleInfo(module1)
-    assert crawler.graph[key] == {value1}
+    assert result[key] == {value1}
 
 
-def test_build_graph_package_imports(crawler, tmp_path):
+def test_build_graph_package_imports(tmp_path):
     """Builds graph with package imports."""
     pkg_dir = tmp_path / "mypackage"
     pkg_dir.mkdir()
@@ -107,141 +145,79 @@ def test_build_graph_package_imports(crawler, tmp_path):
     main_file = tmp_path / "main.py"
     main_file.write_text("import mypackage")
 
-    crawler.build_graph(main_file)
+    graph = DependencyGraph()
+    visited_paths = set()
+    stdlib_paths = set()
 
-    assert main_file in crawler.visited_paths
-    assert init_file in crawler.visited_paths
+    result = build_graph(
+        file_path=main_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
+
+    assert main_file in visited_paths
+    assert init_file in visited_paths
+
     key = ModuleInfo(main_file)
     value = ModuleInfo(init_file)
-    assert crawler.graph[key] == {value}
+    assert result[key] == {value}
 
 
-def test_build_graph_nonexistent_import(crawler, tmp_path):
-    """Handles nonexistent imports gracefully."""
-    main_file = tmp_path / "main.py"
-    main_file.write_text("import nonexistent_module")
-
-    crawler.build_graph(main_file)
-
-    assert main_file in crawler.visited_paths
-    assert main_file not in crawler.graph
-
-
-def test_build_graph_syntax_error(crawler, tmp_path):
+def test_build_graph_syntax_error(tmp_path):
     """Handles files with syntax errors gracefully."""
     main_file = tmp_path / "main.py"
     main_file.write_text("Not valid python!")
 
-    crawler.build_graph(main_file)
+    graph = DependencyGraph()
+    visited_paths = set()
+    stdlib_paths = set()
 
-    assert main_file in crawler.visited_paths
-    assert main_file not in crawler.graph
+    result = build_graph(
+        file_path=main_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
+
+    assert main_file in visited_paths
+    assert len(result.dependencies) == 0
 
 
-def test_build_graph_already_visited(crawler, tmp_path):
+def test_build_graph_already_visited(tmp_path):
     """Skips already visited files."""
     test_file = tmp_path / "test.py"
     test_file.write_text("x = 1")
 
-    crawler.visited_paths.add(test_file)
+    graph = DependencyGraph()
+    visited_paths = {test_file}  # Already visited
+    stdlib_paths = set()
 
-    crawler.build_graph(test_file)
-    assert test_file not in crawler.graph
+    result = build_graph(
+        file_path=test_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
+
+    assert len(result.dependencies) == 0
 
 
-def test_build_graph_non_py_file(crawler, tmp_path):
+def test_build_graph_non_py_file(tmp_path):
     """Skips non-Python files."""
     test_file = tmp_path / "test.txt"
     test_file.write_text("not a python file")
 
-    crawler.build_graph(test_file)
+    graph = DependencyGraph()
+    visited_paths = set()
+    stdlib_paths = set()
 
-    assert test_file not in crawler.visited_paths
-    assert test_file not in crawler.graph
+    result = build_graph(
+        file_path=test_file,
+        graph=graph,
+        visited_paths=visited_paths,
+        stdlib_paths=stdlib_paths,
+    )
 
-
-@pytest.fixture
-def nested_package_structure(tmp_path):
-    """
-    Creates a nested package structure for testing import resolution:
-
-    tmp_path/
-    ├── root_pkg/
-    │   ├── __init__.py
-    │   ├── utils.py
-    │   └── subpkg/
-    │       ├── __init__.py
-    │       └── deep/
-    │           ├── __init__.py
-    │           └── module.py
-    """
-    root_pkg = tmp_path / "root_pkg"
-    subpkg = root_pkg / "subpkg"
-    deep_pkg = subpkg / "deep"
-
-    # Create directories
-    for dir_path in [root_pkg, subpkg, deep_pkg]:
-        dir_path.mkdir(parents=True)
-        (dir_path / "__init__.py").touch()
-
-    # Create some module files
-    (root_pkg / "utils.py").write_text("def helper(): pass")
-    (deep_pkg / "module.py").write_text("from ...utils import helper")
-
-    return tmp_path
-
-
-def test_find_module_with_package_expansion(nested_package_structure):
-    """Resolves imports by expanding to outer package root."""
-    deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
-    crawler = ImportCrawler(deep_module)
-
-    # Try to find utils.py from the deep module directory
-    search_dir = nested_package_structure / "root_pkg/subpkg/deep"
-    module_path = crawler.find_module("utils", search_dir)
-
-    assert module_path is not None
-    assert module_path == nested_package_structure / "root_pkg/utils.py"
-
-
-def test_find_module_no_expansion_needed(nested_package_structure):
-    """Finds module normally when expansion isn't needed."""
-    root_init = nested_package_structure / "root_pkg/__init__.py"
-    crawler = ImportCrawler(root_init)
-
-    # Try to find utils.py from the root package directory
-    search_dir = nested_package_structure / "root_pkg"
-    module_path = crawler.find_module("utils", search_dir)
-
-    assert module_path is not None
-    assert module_path == nested_package_structure / "root_pkg/utils.py"
-
-
-def test_find_module_expansion_fails(nested_package_structure):
-    """Returns None when expansion doesn't help."""
-    deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
-    crawler = ImportCrawler(deep_module)
-
-    # Try to find a non-existent module
-    search_dir = nested_package_structure / "root_pkg/subpkg/deep"
-    module_path = crawler.find_module("nonexistent", search_dir)
-
-    assert module_path is None
-
-
-def test_find_module_respects_project_root(nested_package_structure, tmp_path):
-    """Doesn't resolve modules outside project root."""
-    # Create a module outside the project root
-    outside_dir = tmp_path.parent / "outside_pkg"
-    outside_dir.mkdir()
-    (outside_dir / "__init__.py").touch()
-    (outside_dir / "external.py").touch()
-
-    deep_module = nested_package_structure / "root_pkg/subpkg/deep/module.py"
-    crawler = ImportCrawler(deep_module)
-
-    # Try to find the external module from inside the project root
-    search_dir = nested_package_structure / "root_pkg"
-    module_path = crawler.find_module("external", search_dir)
-
-    assert module_path is None
+    assert test_file not in visited_paths
+    assert len(result.dependencies) == 0

@@ -1,17 +1,22 @@
 import pytest
-from depgraph.import_crawler.import_crawler import ImportCrawler
+from depgraph.import_crawler.find_module import find_module
 
 
-def test_find_local_module_first(crawler, tmp_path):
+def test_find_local_module_first(tmp_path):
     """Local modules are found before checking sys.path."""
     local_module = tmp_path / "test_module.py"
     local_module.touch()
 
-    result = crawler.find_module("test_module", tmp_path)
+    result = find_module(
+        module_name="test_module",
+        search_dir=tmp_path,
+        parent_path=tmp_path,
+        stdlib_paths=set(),
+    )
     assert result == local_module
 
 
-def test_fallback_to_syspath(crawler, tmp_path):
+def test_fallback_to_syspath(tmp_path):
     """Falls back to sys.path when local module not found."""
     other_dir = tmp_path / "other"
     other_dir.mkdir()
@@ -21,17 +26,27 @@ def test_fallback_to_syspath(crawler, tmp_path):
 
     with pytest.MonkeyPatch.context() as mp:
         mp.syspath_prepend(str(other_dir))
-        result = crawler.find_module("test_module", tmp_path)
+        result = find_module(
+            module_name="test_module",
+            search_dir=tmp_path,
+            parent_path=tmp_path,
+            stdlib_paths=set(),
+        )
         assert result == module_file
 
 
-def test_nonexistent_module(crawler, tmp_path):
+def test_nonexistent_module(tmp_path):
     """Returns None when module is not found anywhere."""
-    result = crawler.find_module("nonexistent_module", tmp_path)
+    result = find_module(
+        module_name="nonexistent_module",
+        search_dir=tmp_path,
+        parent_path=tmp_path,
+        stdlib_paths=set(),
+    )
     assert result is None
 
 
-def test_package_module(crawler, tmp_path):
+def test_package_module(tmp_path):
     """Finds modules within packages."""
     package_dir = tmp_path / "mypackage"
     package_dir.mkdir()
@@ -42,11 +57,16 @@ def test_package_module(crawler, tmp_path):
     submodule = package_dir / "submodule.py"
     submodule.touch()
 
-    result = crawler.find_module("mypackage.submodule", tmp_path)
+    result = find_module(
+        module_name="mypackage.submodule",
+        search_dir=tmp_path,
+        parent_path=tmp_path,
+        stdlib_paths=set(),
+    )
     assert result == submodule
 
 
-def test_non_local_module(crawler, tmp_path):
+def test_non_local_module(tmp_path):
     """Returns None for non-local modules."""
     # Create a module outside the search directory
     outside_dir = tmp_path.parent / "outside"
@@ -55,11 +75,16 @@ def test_non_local_module(crawler, tmp_path):
     outside_module.touch()
 
     # Search from tmp_path
-    result = crawler.find_module("outside_module", tmp_path)
+    result = find_module(
+        module_name="outside_module",
+        search_dir=tmp_path,
+        parent_path=tmp_path,
+        stdlib_paths=set(),
+    )
     assert result is None
 
 
-def test_relative_path_resolution(crawler, tmp_path):
+def test_relative_path_resolution(tmp_path):
     """Resolves relative paths correctly."""
     module_dir = tmp_path / "package"
     module_dir.mkdir()
@@ -69,7 +94,12 @@ def test_relative_path_resolution(crawler, tmp_path):
 
     with pytest.MonkeyPatch.context() as mp:
         mp.chdir(tmp_path)
-        result = crawler.find_module("package.test_module", tmp_path)
+        result = find_module(
+            module_name="package.test_module",
+            search_dir=tmp_path,
+            parent_path=tmp_path,
+            stdlib_paths=set(),
+        )
         assert result == module_file
 
 
@@ -92,11 +122,13 @@ def test_find_module_with_package_expansion(tmp_path):
     deep_module = deep_pkg / "module.py"
     deep_module.write_text("from ...utils import helper")
 
-    # Initialize crawler with the deep module as the root file
-    crawler = ImportCrawler(deep_module)
-
     # Try to find utils.py from deep inside the package
-    result = crawler.find_module("utils", deep_pkg)
+    result = find_module(
+        module_name="utils",
+        search_dir=deep_pkg,
+        parent_path=deep_pkg,
+        stdlib_paths=set(),
+    )
     assert result == utils_module
 
 
@@ -109,10 +141,12 @@ def test_find_module_expansion_not_needed(tmp_path):
     module_file = pkg_dir / "module.py"
     module_file.touch()
 
-    # Initialize crawler with the module we're looking for
-    crawler = ImportCrawler(module_file)
-
-    result = crawler.find_module("module", pkg_dir)
+    result = find_module(
+        module_name="module",
+        search_dir=pkg_dir,
+        parent_path=pkg_dir,
+        stdlib_paths=set(),
+    )
     assert result == module_file
 
 
@@ -130,10 +164,13 @@ def test_find_module_expansion_fails(tmp_path):
     test_module = subpkg / "test.py"
     test_module.touch()
 
-    crawler = ImportCrawler(test_module)
-
     # Try to find non-existent module
-    result = crawler.find_module("nonexistent", subpkg)
+    result = find_module(
+        module_name="nonexistent",
+        search_dir=subpkg,
+        parent_path=subpkg,
+        stdlib_paths=set(),
+    )
     assert result is None
 
 
@@ -156,11 +193,13 @@ def test_find_module_with_middle_package_expansion(tmp_path):
     deep_module = deep_pkg / "module.py"
     deep_module.write_text("from ..utils import helper")
 
-    # Initialize crawler with the deep module as the root file
-    crawler = ImportCrawler(deep_module)
-
     # Try to find utils.py from deep inside the package
-    result = crawler.find_module("utils", deep_pkg)
+    result = find_module(
+        module_name="utils",
+        search_dir=deep_pkg,
+        parent_path=deep_pkg,
+        stdlib_paths=set(),
+    )
     assert result == utils_module
 
 
@@ -194,12 +233,58 @@ def test_find_module_with_recursive_package_search(tmp_path):
         "from .....root_utils import thing"
     )
 
-    # Initialize crawler with the deep module as the root file
-    crawler = ImportCrawler(deep_module)
-
     # Try to find each module from deep inside the package
     search_dir = deep_pkg
 
-    assert crawler.find_module("sub_utils", search_dir) == sub_module
-    assert crawler.find_module("mid_utils", search_dir) == mid_module
-    assert crawler.find_module("root_utils", search_dir) == root_module
+    assert (
+        find_module(
+            module_name="sub_utils",
+            search_dir=search_dir,
+            parent_path=search_dir,
+            stdlib_paths=set(),
+        )
+        == sub_module
+    )
+    assert (
+        find_module(
+            module_name="mid_utils",
+            search_dir=search_dir,
+            parent_path=search_dir,
+            stdlib_paths=set(),
+        )
+        == mid_module
+    )
+    assert (
+        find_module(
+            module_name="root_utils",
+            search_dir=search_dir,
+            parent_path=search_dir,
+            stdlib_paths=set(),
+        )
+        == root_module
+    )
+
+
+def test_find_module_respects_project_root(tmp_path):
+    """Doesn't resolve modules outside project root."""
+    # Create a module outside the project root
+    outside_dir = tmp_path.parent / "outside_pkg"
+    outside_dir.mkdir(exist_ok=True)
+    (outside_dir / "__init__.py").touch()
+    (outside_dir / "external.py").touch()
+
+    # Create project root with a module inside
+    root_pkg = tmp_path / "root_pkg"
+    root_pkg.mkdir()
+    root_init = root_pkg / "__init__.py"
+    root_init.touch()
+
+    # Try to find the external module from inside the project root
+    result = find_module(
+        module_name="external",
+        search_dir=root_pkg,
+        parent_path=root_pkg,
+        stdlib_paths=set(),
+    )
+
+    assert result is None
