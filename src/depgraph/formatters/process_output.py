@@ -1,8 +1,8 @@
 from typing import Dict, Optional, List, Any
-from depgraph.data.scope_info import ScopeInfo
-from depgraph.data.file_analysis import FileAnalysis
-from depgraph.data.scope_name import ScopeName
-from depgraph.data.assignment_data import AssignmentData
+from depgraph.visitors.data.scope_info import ScopeInfo
+from depgraph.processors.data.file_analysis import FileAnalysis
+from depgraph.visitors.data.scope_name import ScopeName
+from depgraph.visitors.data.assignment_data import AssignmentData
 
 
 def process_output(

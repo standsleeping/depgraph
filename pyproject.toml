@@ -12,6 +12,7 @@ dev = [
     "pydeps>=3.0.1",
     "pytest>=8.3.4",
     "ruff>=0.9.2",
+    "ty>=0.0.1a7",
 ]
 
 [tool.mypy]

@@ -1,7 +1,7 @@
 import ast
 from typing import List
-from depgraph.data.scope_name import ScopeName
-from depgraph.data.assignment_data import AssignmentData
+from depgraph.visitors.data.scope_name import ScopeName
+from depgraph.visitors.data.assignment_data import AssignmentData
 
 
 class AssignmentVisitor(ast.NodeVisitor):

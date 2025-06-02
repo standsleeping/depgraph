@@ -1,10 +1,10 @@
 import ast
 from pathlib import Path
 from depgraph.formatters.process_output import process_output
-from depgraph.data.file_analysis import FileAnalysis
-from depgraph.data.scope_info import ScopeInfo
-from depgraph.data.scope_name import ScopeName
-from depgraph.data.assignment_data import AssignmentData
+from depgraph.processors.data.file_analysis import FileAnalysis
+from depgraph.visitors.data.scope_info import ScopeInfo
+from depgraph.visitors.data.scope_name import ScopeName
+from depgraph.visitors.data.assignment_data import AssignmentData
 
 
 def test_process_output_basic():

@@ -1,6 +1,6 @@
 import ast
 import pytest
-from depgraph.data.assignment_data import AssignmentData
+from depgraph.visitors.data.assignment_data import AssignmentData
 
 
 def test_assignment_data_creation():

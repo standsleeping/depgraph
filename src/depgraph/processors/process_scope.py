@@ -1,6 +1,6 @@
 from typing import List
-from depgraph.data.scope_info import ScopeInfo
-from depgraph.data.assignment_data import AssignmentData
+from depgraph.visitors.data.scope_info import ScopeInfo
+from depgraph.visitors.data.assignment_data import AssignmentData
 from depgraph.visitors.assignment_visitor import AssignmentVisitor
 
 

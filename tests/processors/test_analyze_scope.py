@@ -1,7 +1,7 @@
 import ast
 
-from depgraph.data.scope_info import ScopeInfo
-from depgraph.data.scope_name import ScopeName
+from depgraph.visitors.data.scope_info import ScopeInfo
+from depgraph.visitors.data.scope_name import ScopeName
 from depgraph.processors.process_scope import process_scope
 from tests.conftest import create_test_file
 

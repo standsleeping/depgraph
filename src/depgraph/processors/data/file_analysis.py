@@ -2,8 +2,8 @@ import ast
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Dict, Optional
-from depgraph.data.scope_info import ScopeInfo
-from depgraph.data.scope_name import ScopeName
+from depgraph.visitors.data.scope_info import ScopeInfo
+from depgraph.visitors.data.scope_name import ScopeName
 
 
 @dataclass

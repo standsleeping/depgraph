@@ -2,7 +2,7 @@ import ast
 from pathlib import Path
 from depgraph.tools import parse_file
 from depgraph.visitors import ScopeVisitor
-from depgraph.data.file_analysis import FileAnalysis
+from depgraph.processors.data.file_analysis import FileAnalysis
 
 
 def process_file(abs_file_path: Path, depth: int) -> FileAnalysis:

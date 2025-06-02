@@ -1,8 +1,8 @@
 import ast
 from textwrap import dedent
 from depgraph.visitors.scope_visitor import ScopeVisitor
-from depgraph.data.scope_info import ScopeInfo
-from depgraph.data.scope_name import ScopeName
+from depgraph.visitors.data.scope_info import ScopeInfo
+from depgraph.visitors.data.scope_name import ScopeName
 
 
 def test_module_scope():

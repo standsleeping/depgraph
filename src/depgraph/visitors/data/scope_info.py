@@ -1,9 +1,9 @@
 import ast
 from dataclasses import dataclass
 from typing import Optional, get_args
-from depgraph.data.scope_name import ScopeName
-from depgraph.data.scope_node import ScopeNode
-from depgraph.data.scope_type import ScopeType
+from .scope_name import ScopeName
+from .scope_node import ScopeNode
+from .scope_type import ScopeType
 
 
 @dataclass
