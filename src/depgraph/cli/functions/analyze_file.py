@@ -1,13 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any
-from depgraph.processors import process_file
-from depgraph.processors.data.file_analysis import FileAnalysis
-from depgraph.visitors.data.scope_info import ScopeInfo
-from depgraph.visitors.data.scope_name import ScopeName
-from depgraph.processors.process_scope import process_scope
-from depgraph.import_crawler.crawl import crawl
+from depgraph.processors import analyze_file as processor_analyze_file
 from depgraph.formatters.process_output import process_output
-from depgraph.tools.convert_to_abs_path import convert_to_abs_path
 
 
 def analyze_file(
@@ -27,31 +21,20 @@ def analyze_file(
         - graph (dependency graph)
         - unresolved_imports
     """
-    abs_file_path: Path = convert_to_abs_path(str(file_path))
-
-    file_analysis: FileAnalysis = process_file(abs_file_path=abs_file_path, depth=depth)
-
-    module_scope_info: ScopeInfo
-    if scope_filter:
-        module_scope_info = file_analysis.scopes[ScopeName(scope_filter)]
-    else:
-        module_scope_info = file_analysis.scopes[ScopeName("<module>")]
-
-    assignments = process_scope(module_scope_info)
-
-    output: Dict[str, Any] = process_output(
-        analysis=file_analysis,
-        scope_filter=scope_filter,
-        assignments=assignments,
+    # Get raw analysis results from processors
+    raw_results = processor_analyze_file(
+        file_path=file_path, depth=depth, scope_filter=scope_filter
     )
 
-    graph, unresolved_imports = crawl(
-        abs_file_path=abs_file_path,
+    # Format the results using formatters
+    formatted_output = process_output(
+        analysis=raw_results["file_analysis"],
+        scope_filter=raw_results["scope_filter"],
+        assignments=raw_results["assignments"],
     )
 
-    json_graph = graph.to_json()
+    # Add graph and unresolved imports to formatted output
+    formatted_output["graph"] = raw_results["graph"]
+    formatted_output["unresolved_imports"] = raw_results["unresolved_imports"]
 
-    output["graph"] = json_graph
-    output["unresolved_imports"] = unresolved_imports
-
-    return output
+    return formatted_output
