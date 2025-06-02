@@ -16,3 +16,6 @@ wheels/
 .ruff_cache
 depgraph.log
 scratch/
+RULES.md
+CLAUDE.md
+depgraph.svg

@@ -9,6 +9,7 @@ dependencies = []
 [dependency-groups]
 dev = [
     "mypy>=1.14.1",
+    "pydeps>=3.0.1",
     "pytest>=8.3.4",
     "ruff>=0.9.2",
 ]
@@ -53,3 +54,8 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = "tests.*"
 ignore_errors = true
+
+[tool.pydeps]
+exclude = [
+    "depgraph.logging"
+]

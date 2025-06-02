@@ -1,3 +1,4 @@
-from .logger import get_logger, configure_logging
+from depgraph.logging.functions.configure_logging import configure_logging
+from depgraph.logging.functions.get_logger import get_logger
 
-__all__ = ["get_logger", "configure_logging"]
+__all__ = ["configure_logging", "get_logger"]
