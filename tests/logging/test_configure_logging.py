@@ -20,8 +20,9 @@ def test_configure_logging() -> None:
 
         assert root_logger.level == logging.INFO
         assert len(root_logger.handlers) == 1
-        assert isinstance(root_logger.handlers[0], logging.StreamHandler)
-        assert root_logger.handlers[0].stream == sys.stderr
+        handler = root_logger.handlers[0]
+        assert isinstance(handler, logging.StreamHandler)
+        assert handler.stream == sys.stderr
 
         # Test with custom level
         for handler in root_logger.handlers[:]:

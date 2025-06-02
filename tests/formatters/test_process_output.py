@@ -204,19 +204,19 @@ def test_process_output_with_assignments():
             name="x",
             node=assign_node1,
             type="basic",
-            scope_name="<module>",
+            scope_name=ScopeName("<module>"),
         ),
         AssignmentData(
             name="y",
             node=assign_node2,
             type="augmented",
-            scope_name="<module>",
+            scope_name=ScopeName("<module>"),
         ),
         AssignmentData(
             name="z",
             node=assign_node3,
             type="annotated",
-            scope_name="<module>",
+            scope_name=ScopeName("<module>"),
         ),
     ]
 

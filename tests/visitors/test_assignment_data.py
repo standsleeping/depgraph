@@ -1,6 +1,7 @@
 import ast
 import pytest
 from depgraph.visitors.data.assignment_data import AssignmentData
+from depgraph.visitors.data.scope_name import ScopeName
 
 
 def test_assignment_data_creation():
@@ -10,12 +11,12 @@ def test_assignment_data_creation():
         value=ast.Constant(value=1),
     )
 
-    assignment = AssignmentData(name="x", node=node, type="basic", scope_name="module")
+    assignment = AssignmentData(name="x", node=node, type="basic", scope_name=ScopeName("<module>"))
 
     assert assignment.name == "x"
     assert isinstance(assignment.node, ast.Assign)
     assert assignment.type == "basic"
-    assert assignment.scope_name == "module"
+    assert assignment.scope_name == ScopeName("<module>")
 
 
 def test_assignment_data_invalid_type():
@@ -30,5 +31,5 @@ def test_assignment_data_invalid_type():
             name="x",
             node=node,
             type="some-invalid-type",  # type: ignore
-            scope_name="module",
+            scope_name=ScopeName("<module>"),
         )

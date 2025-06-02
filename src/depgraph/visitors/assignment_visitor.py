@@ -1,4 +1,5 @@
 import ast
+from ast import Name, Attribute, Subscript
 from typing import List
 from depgraph.visitors.data.scope_name import ScopeName
 from depgraph.visitors.data.assignment_data import AssignmentData
@@ -27,10 +28,11 @@ class AssignmentVisitor(ast.NodeVisitor):
 
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         """Augmented assignments like 'x += 1'."""
-        if isinstance(node.target, ast.Name):
+        target: Name | Attribute | Subscript = node.target
+        if isinstance(target, Name):
             self.assignments.append(
                 AssignmentData(
-                    name=node.target.id,
+                    name=target.id,
                     node=node,
                     type="augmented",
                     scope_name=self.scope_name,
