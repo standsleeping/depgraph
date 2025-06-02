@@ -5,13 +5,16 @@ from depgraph.visitors.data.scope_name import ScopeName
 from depgraph.visitors.data.assignment_data import AssignmentData
 
 
-def process_output(
+def format_analysis(
     *,
     analysis: FileAnalysis,
     scope_filter: Optional[str] = None,
     assignments: Optional[List[AssignmentData]] = None,
 ) -> Dict[str, Any]:
     """Convert the analysis to a dictionary containing the processed scopes and assignments.
+
+    This function handles the conversion from visitor data structures to simple
+    dictionaries that can be consumed by the formatters layer.
 
     Args:
         analysis: The analysis to convert
@@ -24,18 +27,17 @@ def process_output(
     if assignments is None:
         assignments = []
 
-    result: Dict[str, Any] = {
-        "scopes": {},
-        "assignments": []
-    }
+    result: Dict[str, Any] = {"scopes": {}, "assignments": []}
 
-    def process_scope(scope_name: ScopeName, scopes: Dict[ScopeName, ScopeInfo]) -> Dict[str, Any]:
+    def process_scope(
+        scope_name: ScopeName, scopes: Dict[ScopeName, ScopeInfo]
+    ) -> Dict[str, Any]:
         """Process a scope and its children into a dict structure."""
         scope_info = scopes[scope_name]
         scope_dict: Dict[str, Any] = {
             "name": str(scope_name),
             "type": scope_info.type,
-            "children": []
+            "children": [],
         }
 
         children = [
@@ -62,14 +64,14 @@ def process_output(
             "augmented": "+=/-=/*=/etc",
             "annotated": ": type =",
         }
-        
+
         for assignment in sorted(assignments, key=lambda x: x.name):
-            result["assignments"].append({
-                "name": assignment.name,
-                "type": assignment.type,
-                "operator": type_indicators.get(assignment.type, "unknown")
-            })
+            result["assignments"].append(
+                {
+                    "name": assignment.name,
+                    "type": assignment.type,
+                    "operator": type_indicators.get(assignment.type, "unknown"),
+                }
+            )
 
     return result
-
-

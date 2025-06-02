@@ -1,6 +1,8 @@
 import ast
 from pathlib import Path
-from depgraph.formatters.process_output import process_output
+from depgraph.processors.functions.format_analysis import (
+    format_analysis as process_output,
+)
 from depgraph.processors.data.file_analysis import FileAnalysis
 from depgraph.visitors.data.scope_info import ScopeInfo
 from depgraph.visitors.data.scope_name import ScopeName
@@ -11,6 +13,7 @@ def test_process_output_basic():
     """With no filter or assignments, the output is the entire module."""
     # Create a simple module with one class and one function
     module_node = ast.Module(body=[], type_ignores=[])
+
     class_node = ast.ClassDef(
         name="TestClass",
         bases=[],
@@ -18,6 +21,7 @@ def test_process_output_basic():
         body=[],
         decorator_list=[],
     )
+
     func_node = ast.FunctionDef(
         name="test_func",
         args=ast.arguments(
@@ -35,12 +39,14 @@ def test_process_output_basic():
     module_scope = ScopeInfo(
         name=ScopeName("<module>"), node=module_node, type="module"
     )
+
     class_scope = ScopeInfo(
         name=ScopeName("<module>.TestClass"),
         node=class_node,
         type="class",
         parent=ScopeName("<module>"),
     )
+
     func_scope = ScopeInfo(
         name=ScopeName("<module>.test_func"),
         node=func_node,
@@ -51,12 +57,12 @@ def test_process_output_basic():
     # Create file analysis
     analysis = FileAnalysis(
         abs_file_path=Path("test.py"),
+        ast_tree=module_node,
         scopes={
             ScopeName("<module>"): module_scope,
             ScopeName("<module>.TestClass"): class_scope,
             ScopeName("<module>.test_func"): func_scope,
         },
-        ast_tree=module_node,
     )
 
     # Process the output
@@ -79,6 +85,7 @@ def test_process_output_with_filter():
     """With a scope filter, the output is the module and the filtered scope."""
     # Create a simple module with one class and one method in that class
     module_node = ast.Module(body=[], type_ignores=[])
+
     class_node = ast.ClassDef(
         name="TestClass",
         bases=[],
@@ -86,6 +93,7 @@ def test_process_output_with_filter():
         body=[],
         decorator_list=[],
     )
+
     method_node = ast.FunctionDef(
         name="test_method",
         args=ast.arguments(
@@ -103,12 +111,14 @@ def test_process_output_with_filter():
     module_scope = ScopeInfo(
         name=ScopeName("<module>"), node=module_node, type="module"
     )
+
     class_scope = ScopeInfo(
         name=ScopeName("<module>.TestClass"),
         node=class_node,
         type="class",
         parent=ScopeName("<module>"),
     )
+
     method_scope = ScopeInfo(
         name=ScopeName("<module>.TestClass.test_method"),
         node=method_node,
@@ -119,12 +129,12 @@ def test_process_output_with_filter():
     # Create file analysis
     analysis = FileAnalysis(
         abs_file_path=Path("test.py"),
+        ast_tree=module_node,
         scopes={
             ScopeName("<module>"): module_scope,
             ScopeName("<module>.TestClass"): class_scope,
             ScopeName("<module>.TestClass.test_method"): method_scope,
         },
-        ast_tree=module_node,
     )
 
     # Process the output with a filter on TestClass
@@ -142,6 +152,7 @@ def test_process_output_with_invalid_filter():
     """With an invalid scope filter, the output is an error message."""
     # Create a simple module
     module_node = ast.Module(body=[], type_ignores=[])
+
     module_scope = ScopeInfo(
         name=ScopeName("<module>"), node=module_node, type="module"
     )
@@ -173,11 +184,13 @@ def test_process_output_with_assignments():
         targets=[ast.Name(id="x", ctx=ast.Store())],
         value=ast.Constant(value=1),
     )
+
     assign_node2 = ast.AugAssign(
         target=ast.Name(id="y", ctx=ast.Store()),
         op=ast.Add(),
         value=ast.Constant(value=2),
     )
+
     assign_node3 = ast.AnnAssign(
         target=ast.Name(id="z", ctx=ast.Store()),
         annotation=ast.Name(id="int", ctx=ast.Load()),
@@ -210,12 +223,12 @@ def test_process_output_with_assignments():
     # Create file analysis
     analysis = FileAnalysis(
         abs_file_path=Path("test.py"),
+        ast_tree=module_node,
         scopes={
             ScopeName("<module>"): ScopeInfo(
                 name=ScopeName("<module>"), node=module_node, type="module"
             ),
         },
-        ast_tree=module_node,
     )
 
     # Process the output with assignments

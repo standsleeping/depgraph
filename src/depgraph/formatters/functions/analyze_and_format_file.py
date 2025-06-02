@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, Any
 from depgraph.processors import analyze_file as processor_analyze_file
-from depgraph.formatters.process_output import process_output
+from depgraph.processors import format_analysis
 
 
 def analyze_and_format_file(
@@ -28,16 +28,16 @@ def analyze_and_format_file(
     raw_results = processor_analyze_file(
         file_path=file_path, depth=depth, scope_filter=scope_filter
     )
-    
-    # Format the core analysis results
-    formatted_output = process_output(
+
+    # Format the core analysis results using processors formatting
+    formatted_output = format_analysis(
         analysis=raw_results["file_analysis"],
         scope_filter=raw_results["scope_filter"],
         assignments=raw_results["assignments"],
     )
-    
+
     # Add graph and unresolved imports to formatted output
     formatted_output["graph"] = raw_results["graph"]
     formatted_output["unresolved_imports"] = raw_results["unresolved_imports"]
-    
+
     return formatted_output
