@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Dict, Any
-from depgraph.processors import analyze_file as processor_analyze_file
-from depgraph.formatters.process_output import process_output
+from depgraph.formatters import analyze_and_format_file
 
 
 def analyze_file(
@@ -16,25 +15,11 @@ def analyze_file(
 
     Returns:
         Dictionary containing analysis results with keys:
-        - file_analysis data
-        - assignments
-        - graph (dependency graph)
-        - unresolved_imports
+        - scopes: formatted scope information  
+        - assignments: formatted assignment data
+        - graph: dependency graph
+        - unresolved_imports: unresolved imports
     """
-    # Get raw analysis results from processors
-    raw_results = processor_analyze_file(
+    return analyze_and_format_file(
         file_path=file_path, depth=depth, scope_filter=scope_filter
     )
-
-    # Format the results using formatters
-    formatted_output = process_output(
-        analysis=raw_results["file_analysis"],
-        scope_filter=raw_results["scope_filter"],
-        assignments=raw_results["assignments"],
-    )
-
-    # Add graph and unresolved imports to formatted output
-    formatted_output["graph"] = raw_results["graph"]
-    formatted_output["unresolved_imports"] = raw_results["unresolved_imports"]
-
-    return formatted_output
