@@ -2,6 +2,27 @@ import ast
 from typing import Any
 
 
+def extract_import_aliases(tree: ast.AST) -> dict[str, str]:
+    """Extract import aliases from the AST."""
+    import_aliases = {}
+    
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            # Track 'from module import name' statements
+            for alias in node.names:
+                imported_name = alias.name
+                local_name = alias.asname if alias.asname else imported_name
+                import_aliases[local_name] = imported_name
+        elif isinstance(node, ast.Import):
+            # Track 'import module' statements
+            for alias in node.names:
+                module_name = alias.name
+                local_name = alias.asname if alias.asname else module_name
+                import_aliases[local_name] = module_name
+    
+    return import_aliases
+
+
 def analyze_call_tree(source_code: str, target_function_name: str) -> dict[str, Any]:
     """
     Analyze Python source code to find all calls to a target function.
@@ -16,6 +37,9 @@ def analyze_call_tree(source_code: str, target_function_name: str) -> dict[str, 
         - direct_callers: List of functions that directly call the target
     """
     tree = ast.parse(source_code)
+    
+    # Extract import aliases for this file
+    import_aliases = extract_import_aliases(tree)
 
     # Build a map of function definitions
     functions = {}
@@ -38,9 +62,28 @@ def analyze_call_tree(source_code: str, target_function_name: str) -> dict[str, 
             if isinstance(node, ast.Call):
                 # Check if this is a call to our target function
                 func_expr = node.func
+                called_func_name = None
+                
                 if isinstance(func_expr, ast.Name):
-                    called_func_name = func_expr.id
-                    if called_func_name == target_function_name:
+                    # Direct function call: func() or renamed_func()
+                    local_name = func_expr.id
+                    
+                    # Check if this is an aliased import
+                    if local_name in import_aliases:
+                        # This is an imported function, possibly renamed
+                        actual_name = import_aliases[local_name]
+                        if actual_name == target_function_name:
+                            called_func_name = target_function_name
+                    elif local_name == target_function_name:
+                        # Direct call without import alias
+                        called_func_name = target_function_name
+                        
+                elif isinstance(func_expr, ast.Attribute):
+                    # Module.function call: module.func()
+                    if func_expr.attr == target_function_name:
+                        called_func_name = target_function_name
+                
+                if called_func_name == target_function_name:
                         # Extract arguments
                         positional = []
                         for arg in node.args:
