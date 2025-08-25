@@ -1,4 +1,7 @@
 import logging
+from pathlib import Path
+
+from depgraph.cli.actions import AnalysisAction
 from depgraph.cli.parse_args import parse_args
 from depgraph.logging import configure_logging, get_logger
 from depgraph.cli.functions.analyze_file import analyze_file
@@ -15,6 +18,8 @@ def run_analysis() -> None:
         scope_filter,
         output_file,
         output_format,
+        action,
+        target_function,
     ) = parse_args()
 
     log_level = getattr(logging, parsed_log_level)
@@ -31,11 +36,30 @@ def run_analysis() -> None:
         logger.debug(f"  output_file: {output_file}")
         logger.debug(f"  output_format: {output_format}")
 
-    logger.info(f"Analyzing file '{file_path}'")
+    if action == AnalysisAction.CALL_TREE:
+        from depgraph.visitors.call_tree import analyze_project_call_tree
 
-    analysis_result = analyze_file(
-        file_path=file_path, depth=depth, scope_filter=scope_filter
-    )
+        logger.info(f"Analyzing tree for func '{target_function}' in '{file_path}'")
+
+        # For call tree, we need to analyze the directory containing the file
+        file_path_obj = Path(file_path)
+        if file_path_obj.is_file():
+            # Analyze the directory containing the file
+            project_dir = file_path_obj.parent
+        else:
+            # Assume it's already a directory
+            project_dir = file_path_obj
+
+        analysis_result = analyze_project_call_tree(str(project_dir), target_function)
+
+    else:
+        logger.info(f"Analyzing dependencies for file '{file_path}'")
+
+        analysis_result = analyze_file(
+            file_path=file_path,
+            depth=depth,
+            scope_filter=scope_filter,
+        )
 
     logger.info("Analysis complete!")
 
